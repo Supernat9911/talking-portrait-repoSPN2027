@@ -30,6 +30,7 @@
   --warm:#E0A253; --stage:#091012; --stage-ink:#DCE6E9; --stage-line:#24333A; color-scheme:dark}
 
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.6;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
 .page{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
@@ -135,6 +136,17 @@ textarea{width:100%;min-height:76px;resize:vertical;font:inherit;padding:10px;bo
 .empty{font-size:.82rem;color:var(--muted);padding:6px 2px}
 .sheet-box{border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px;background:var(--bg);min-width:0}
 .sheet-steps{margin:0;padding-left:1.3em;font-size:.85rem;display:flex;flex-direction:column;gap:2px}
+.wizard{border-color:var(--accent);background:color-mix(in srgb,var(--accent-soft) 45%,var(--bg))}
+.wz{display:flex;flex-direction:column;gap:10px}
+.wz-text{font-size:.88rem}
+.wz-go{font-size:1rem;padding:10px 26px}
+.filebtn.primary-file{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.wz-track{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;counter-reset:wz}
+.wz-track li{counter-increment:wz;font-size:.7rem;color:var(--muted);text-align:center;padding-top:6px;border-top:3px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wz-track li::before{content:counter(wz) " ";font-family:var(--font-mono)}
+.wizard[data-step="0"] .wz-track{display:none}
+.wizard[data-step="1"] .wz-track li:nth-child(-n+1),.wizard[data-step="2"] .wz-track li:nth-child(-n+2),.wizard[data-step="3"] .wz-track li:nth-child(-n+3),
+.wizard[data-step="4"] .wz-track li:nth-child(-n+4),.wizard[data-step="5"] .wz-track li{border-top-color:var(--accent);color:var(--ink)}
 .sheet-box select{font:inherit;font-size:.88rem;padding:7px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);max-width:100%}
 .sheet-details summary{cursor:pointer;font-size:.85rem;color:var(--accent)}
 .sheet-details[open]{display:flex;flex-direction:column;gap:8px}
@@ -211,37 +223,70 @@ ul.tight{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px}
         </label>
         <div class="lib-head"><span>คลังรูป · กดเพื่อสลับ</span><span class="mono" id="photoCount">1 รูป</span></div>
         <div class="gallery" id="photoList" role="list"></div>
-        <div class="sheet-box">
-          <div class="lib-head"><span>สร้างตัวละครพูดได้จากรูปของคุณ</span><span class="mono">ตาราง 3×3</span></div>
-          <ol class="sheet-steps">
-            <li>เลือกสไตล์ แล้วกด <b>คัดลอกพรอมต์</b></li>
-            <li>เปิด AI สร้างภาพ (เช่น ChatGPT หรือ Gemini) แนบรูปใบหน้า แล้ววางพรอมต์</li>
-            <li>ดาวน์โหลดภาพตารางที่ได้ แล้วกด <b>นำเข้า Character Sheet</b></li>
-            <li>วางจุดตาและปากบนช่องแรก แล้วกด <b>เสร็จสิ้น</b> ระบบจะตัดรูปปาก ตาหลับ และท่าทางให้</li>
-          </ol>
-          <div class="row">
-            <label for="sheetStyle" class="note">สไตล์</label>
-            <select id="sheetStyle">
-              <option value="same">เหมือนรูปต้นฉบับ</option>
-              <option value="3d">การ์ตูน 3D แบบมาสคอต</option>
-              <option value="2d">การ์ตูน 2D</option>
-              <option value="anime">อนิเมะ</option>
-            </select>
+        <div class="sheet-box wizard" id="wizard" data-step="0">
+          <div class="lib-head"><span>สร้างใบหน้าคนใหม่</span><span class="mono" id="wzProgress">5 ขั้น</span></div>
+          <ol class="wz-track" aria-hidden="true"><li>รูป</li><li>พรอมต์</li><li>นำเข้า</li><li>สร้าง</li><li>เสร็จ</li></ol>
+
+          <div class="wz" data-s="0">
+            <p class="wz-text">เริ่มจากรูปหน้าตรงของคนใหม่ จะได้ใบหน้าที่ขยับปากได้ทันที แล้วต่อยอดเป็นตัวละครที่มีรูปปาก A E I O U ตาหลับ และท่าทางครบ</p>
+            <div class="row"><button id="wzStart" class="primary wz-go">เริ่ม</button></div>
           </div>
-          <div class="row">
-            <button id="copyPrompt" class="primary">คัดลอกพรอมต์</button>
-            <label class="filebtn">นำเข้า Character Sheet<input type="file" id="sheetIn" accept="image/*"></label>
-          </div>
-          <p class="note" id="sheetNote" aria-live="polite">พรอมต์บังคับให้ทุกช่องจัดหน้าตำแหน่งเดียวกัน ระบบจึงตัดปากและตามาซ้อนได้พอดี</p>
-          <details class="sheet-details">
-            <summary>ดูพรอมต์และแผนผังช่อง</summary>
-            <div class="gridmap" aria-label="แผนผังช่องของ Character Sheet">
-              <span>1 ปากปิด</span><span>2 A · อา</span><span>3 E · เอ</span>
-              <span>4 I · อี</span><span>5 O · โอ</span><span>6 U · อู</span>
-              <span>7 หลับตา</span><span>8 โบกมือ</span><span>9 ไหว้</span>
+
+          <div class="wz" data-s="1" hidden>
+            <p class="wz-text"><b>1. เลือกรูปใบหน้า</b> ใช้รูปหน้าตรง ปากปิด แสงสม่ำเสมอ แล้วลากจุดตาและปากบนภาพให้ตรง ใบหน้าจะเริ่มพูดได้ทันทีแบบเบื้องต้น</p>
+            <div class="row">
+              <label class="filebtn primary-file">เลือกรูปคนใหม่<input type="file" id="wzPhoto" accept="image/*"></label>
+              <button id="wzNext1" data-next>ข้าม (มีภาพตารางแล้ว)</button>
             </div>
-            <textarea id="promptText" readonly aria-label="พรอมต์สำหรับ AI สร้างภาพ"></textarea>
-          </details>
+          </div>
+
+          <div class="wz" data-s="2" hidden>
+            <p class="wz-text"><b>2. ให้ AI สร้าง Character Sheet</b> เลือกสไตล์ กดคัดลอกพรอมต์ แล้วเปิด AI สร้างภาพ (เช่น ChatGPT หรือ Gemini) แนบรูปใบหน้าเดียวกัน แล้ววางพรอมต์</p>
+            <div class="row">
+              <label for="sheetStyle" class="note">สไตล์</label>
+              <select id="sheetStyle">
+                <option value="same">เหมือนรูปต้นฉบับ</option>
+                <option value="3d">การ์ตูน 3D แบบมาสคอต</option>
+                <option value="2d">การ์ตูน 2D</option>
+                <option value="anime">อนิเมะ</option>
+              </select>
+            </div>
+            <div class="row">
+              <button id="copyPrompt" class="primary">คัดลอกพรอมต์</button>
+              <button data-next>ได้ภาพแล้ว ถัดไป</button>
+            </div>
+            <details class="sheet-details">
+              <summary>ดูพรอมต์และแผนผังช่อง</summary>
+              <div class="gridmap" aria-label="แผนผังช่องของ Character Sheet">
+                <span>1 ปากปิด</span><span>2 A · อา</span><span>3 E · เอ</span>
+                <span>4 I · อี</span><span>5 O · โอ</span><span>6 U · อู</span>
+                <span>7 หลับตา</span><span>8 โบกมือ</span><span>9 ไหว้</span>
+              </div>
+              <textarea id="promptText" readonly aria-label="พรอมต์สำหรับ AI สร้างภาพ"></textarea>
+            </details>
+          </div>
+
+          <div class="wz" data-s="3" hidden>
+            <p class="wz-text"><b>3. นำเข้าภาพตาราง 3×3</b> ที่ดาวน์โหลดจาก AI</p>
+            <div class="row"><label class="filebtn primary-file">นำเข้า Character Sheet<input type="file" id="sheetIn" accept="image/*"></label></div>
+          </div>
+
+          <div class="wz" data-s="4" hidden>
+            <p class="wz-text"><b>4. วางจุดตาและปากบนช่องแรก</b> ลากจุด "ตาซ้าย" "ตาขวา" และ "กลางปาก" บนภาพให้ตรง แล้วกดสร้างตัวละคร</p>
+            <div class="row"><button id="wzBuild" class="primary wz-go">สร้างตัวละคร</button></div>
+          </div>
+
+          <div class="wz" data-s="5" hidden>
+            <p class="wz-text"><b>เสร็จแล้ว</b> ตัวละครใหม่อยู่ในคลังตัวละคร 3 ท่า ลองให้พูด หรืออัปโหลดหรืออัดเสียงในขั้นที่ 2</p>
+            <div class="row">
+              <button id="wzSpeak" class="primary">ลองให้พูด</button>
+              <button id="wzDemo">ดูรูปปากทั้งหมด</button>
+              <button id="wzRestart">เริ่มคนใหม่</button>
+            </div>
+          </div>
+
+          <div class="row wz-nav" id="wzNav" hidden><button id="wzBack">ย้อนกลับ</button></div>
+          <p class="note" id="sheetNote" aria-live="polite">ทุกขั้นทำงานในเบราว์เซอร์นี้ ยกเว้นการสร้างภาพตารางที่ทำใน AI สร้างภาพ</p>
         </div>
         <div class="lib-head" id="charHead" hidden><span>ตัวละครจาก Character Sheet · ปากเปลี่ยนตามรูป A E I O U</span><span class="mono" id="charCount"></span></div>
         <div class="gallery" id="charList" role="list" hidden></div>
@@ -766,7 +811,7 @@ $('sheetIn').addEventListener('change',e=>{const f=e.target.files[0];e.target.va
     const p={id:++uid,name:nm,poseName:'หน้าตรง',canvas:cells[0],thumb:makeThumb(cells[0]),lm:L0,sheet:{cells,name:nm}};
     photos.push(p);activatePhoto(p,true);
     $('photoNote').textContent='ลากจุดให้ตรงตาดำทั้งสองข้างและกึ่งกลางปากบนช่องแรก แล้วกด "เสร็จสิ้น" เพื่อสร้างตัวละคร';$('photoNote').className='note warn';
-    sheetNote('นำเข้า '+f.name+' แล้ว ตัดเป็น 9 ช่อง ขั้นต่อไปคือวางจุดใบหน้าบนภาพ');};
+    sheetNote('นำเข้า '+f.name+' แล้ว ตัดเป็น 9 ช่อง ขั้นต่อไปคือวางจุดใบหน้าบนภาพ');wzGo(4);};
   img.onerror=()=>{URL.revokeObjectURL(url);sheetNote('เปิดไฟล์ '+f.name+' ไม่ได้ ลองใช้ไฟล์ PNG หรือ JPG',true);};
   img.src=url;});
 async function buildSheet(p){
@@ -799,8 +844,38 @@ async function buildSheet(p){
   /* the average leftover difference tells whether the generator kept the panels aligned */
   const errs=vis.map(v=>Fm[v].err).concat([Fb.err]);const worst=Math.max(...errs);
   activatePhoto(p);setStatus('idle','พร้อม · '+p.name);
+  if(wzStep===4){wzGo(5);demoVisemes();}
   sheetNote(worst>28?'สร้างตัวละครแล้ว แต่บางช่องจัดหน้าไม่ตรงกัน ปากหรือตาอาจเหลื่อม ถ้าเห็นชัด ให้สร้าง Character Sheet ใหม่ หรือปรับจุดใบหน้าแล้วกดเสร็จสิ้นอีกครั้ง':
     'สร้างตัวละครแล้ว 3 ท่า (หน้าตรง โบกมือ ไหว้) พร้อมรูปปาก A E I O U และตาหลับ กดรูปปากใต้ภาพเพื่อดูทีละแบบ',worst>28);}
+
+/* ---------- Guided flow for a new face ---------- */
+let wzStep=0,demoTimer=0,building=false;
+function wzGo(n){wzStep=Math.max(0,Math.min(5,n));$('wizard').dataset.step=wzStep;
+  document.querySelectorAll('#wizard .wz').forEach(el=>{el.hidden=+el.dataset.s!==wzStep;});
+  $('wzNav').hidden=wzStep===0||wzStep===5;$('wzProgress').textContent=wzStep?('ขั้น '+Math.min(wzStep,4)+' / 4'):'5 ขั้น';
+  if(wzStep===5)$('wzProgress').textContent='เสร็จ';}
+function demoVisemes(){clearTimeout(demoTimer);if(editing)setEditing(false);
+  const seq=['A','E','I','O','U','X'];let i=0;
+  const next=()=>{if(i>=seq.length)return;previewVis=seq[i++];previewUntil=t+.55;demoTimer=setTimeout(next,560);};next();}
+$('wzStart').addEventListener('click',()=>{wzGo(1);sheetNote('เลือกรูปหน้าตรงของคนใหม่ หรือกดข้ามถ้ามีภาพตาราง 3×3 อยู่แล้ว');});
+$('wzBack').addEventListener('click',()=>wzGo(wzStep-1));
+document.querySelectorAll('#wizard [data-next]').forEach(b=>b.addEventListener('click',()=>{
+  if(editing&&activePhoto&&!activePhoto.sheet)setEditing(false);wzGo(wzStep+1);
+  if(wzStep===2)sheetNote('กดคัดลอกพรอมต์ แล้วนำไปวางใน AI สร้างภาพพร้อมรูปใบหน้า เมื่อดาวน์โหลดภาพตารางแล้วกด "ได้ภาพแล้ว ถัดไป"');
+  if(wzStep===3)sheetNote('เลือกไฟล์ภาพตาราง 3×3 ที่ได้จาก AI');}));
+$('wzPhoto').addEventListener('change',async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+  const p=await addPhotoFile(f);if(!p)return;
+  $('wzNext1').textContent='ถัดไป: ทำ Character Sheet';
+  sheetNote('ลากจุดตาและปากบนภาพให้ตรง แล้วกด "ถัดไป" ใบหน้านี้พูดได้แล้วแบบเบื้องต้น (ลองกด "อ่านข้อความ" ในขั้นที่ 2)');});
+$('wzBuild').addEventListener('click',async()=>{if(building)return;
+  if(!activePhoto||!activePhoto.sheet){sheetNote('ยังไม่มีภาพตารางที่นำเข้า ย้อนกลับไปขั้นนำเข้าก่อน',true);return;}
+  building=true;$('wzBuild').disabled=true;$('wzBuild').textContent='กำลังสร้าง…';
+  try{if(editing)setEditing(false);await buildSheet(activePhoto);}
+  finally{building=false;$('wzBuild').disabled=false;$('wzBuild').textContent='สร้างตัวละคร';}});
+$('wzSpeak').addEventListener('click',()=>$('speakBtn').click());
+$('wzDemo').addEventListener('click',demoVisemes);
+$('wzRestart').addEventListener('click',()=>{$('wzNext1').textContent='ข้าม (มีภาพตารางแล้ว)';wzGo(1);sheetNote('เลือกรูปหน้าตรงของคนใหม่ หรือกดข้ามถ้ามีภาพตาราง 3×3 อยู่แล้ว');});
+wzGo(0);
 
 /* ---------- Audio: uploaded voice clip ---------- */
 const audioEl=new Audio();audioEl.preload='auto';
