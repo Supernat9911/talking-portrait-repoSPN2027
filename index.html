@@ -133,6 +133,12 @@ textarea{width:100%;min-height:76px;resize:vertical;font:inherit;padding:10px;bo
 .voice .x{position:static;width:26px;height:26px}
 @media (max-width:440px){.voice{grid-template-columns:auto minmax(0,1fr) auto}.voice select{grid-column:2/3;max-width:none}}
 .empty{font-size:.82rem;color:var(--muted);padding:6px 2px}
+.rec .rec-dot{width:10px;height:10px;border-radius:50%;background:#C8423A;display:block;flex:none}
+.rec.recording{border-color:#C8423A;background:color-mix(in srgb,#C8423A 14%,var(--surface))}
+.rec.recording .rec-dot{border-radius:2px;animation:recpulse 1s ease-in-out infinite}
+@keyframes recpulse{50%{opacity:.35}}
+@media (prefers-reduced-motion: reduce){.rec.recording .rec-dot{animation:none}}
+.rec-time{font-size:.85rem;color:#C8423A;font-variant-numeric:tabular-nums}
 
 /* Blueprint */
 .blueprint{display:flex;flex-direction:column;gap:22px;border-top:1px solid var(--line);padding-top:28px}
@@ -213,6 +219,11 @@ ul.tight{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px}
           <span class="drop-title">ลากคลิปเสียงมาวาง หรือคลิกเพื่อเลือก</span>
           <span class="drop-sub">mp3, wav, m4a, ogg · 10–60 วินาที · อัดในห้องเงียบ</span>
         </label>
+        <div class="row rec-row">
+          <button id="recBtn" class="rec" aria-pressed="false"><i class="rec-dot" aria-hidden="true"></i><span id="recLabel">อัดเสียง</span></button>
+          <span class="mono rec-time" id="recTime" aria-live="off"></span>
+        </div>
+        <p class="note" id="recNote" aria-live="polite">หรือกดอัดเสียงจากไมโครโฟน ใบหน้าจะขยับตามขณะที่พูด เมื่อหยุดอัด คลิปจะเข้าไปอยู่ในคลังเสียง</p>
         <div class="lib-head"><span>คลังเสียง · ระบุสำเนียงของแต่ละคลิป</span><span class="mono" id="voiceCount">0 คลิป</span></div>
         <div class="voices" id="voiceList"><p class="empty">ยังไม่มีคลิปเสียง</p></div>
         <div class="row">
@@ -640,6 +651,39 @@ async function addVoiceFile(f){
   }catch(e){v.error=true;}
   renderVoices();if(activeVoice===v){updateVoiceMeta();$('playAudio').disabled=v.error;}
 }
+/* ---------- Record a clip from the microphone ---------- */
+const REC_MAX=120;
+let rec=null,recStream=null,micAn=null,recChunks=[],recT0=0,recTimer=0,recN=0;
+function micBlocked(){try{const fp=document.permissionsPolicy||document.featurePolicy;return !!(fp&&fp.allowsFeature&&!fp.allowsFeature('microphone'));}catch(e){return false;}}
+function recNote(text,warn){$('recNote').textContent=text;$('recNote').className=warn?'note warn':'note';}
+function updRecUI(){const on=!!rec;const b=$('recBtn');b.setAttribute('aria-pressed',String(on));b.classList.toggle('recording',on);
+  $('recLabel').textContent=on?'หยุดอัด':'อัดเสียง';if(!on)$('recTime').textContent='';}
+function initRec(){
+  if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&window.MediaRecorder)){$('recBtn').disabled=true;recNote('เบราว์เซอร์นี้อัดเสียงไม่ได้ ใช้วิธีอัปโหลดไฟล์แทน',true);return;}
+  if(micBlocked()){$('recBtn').disabled=true;recNote('หน้านี้เปิดอยู่ในกรอบที่ไม่อนุญาตให้ใช้ไมโครโฟน ถ้าจะอัดเสียง ให้เปิดไฟล์ index.html ในเบราว์เซอร์โดยตรง หรืออัดด้วยแอปอื่นแล้วอัปโหลด',true);}}
+async function startRec(){
+  if(editing)setEditing(false);stopAll();
+  try{recStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});}
+  catch(e){recNote(e&&e.name==='NotAllowedError'?'ไม่ได้รับอนุญาตให้ใช้ไมโครโฟน กดไอคอนแม่กุญแจข้างแถบที่อยู่เพื่ออนุญาต แล้วกดอัดอีกครั้ง':(e&&e.name==='NotFoundError'?'ไม่พบไมโครโฟนในเครื่องนี้':'เปิดไมโครโฟนไม่ได้ ลองใหม่ หรืออัปโหลดไฟล์เสียงแทน'),true);recStream=null;return;}
+  const mt=['audio/webm;codecs=opus','audio/mp4','audio/ogg;codecs=opus'].find(t=>MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t));
+  try{rec=new MediaRecorder(recStream,mt?{mimeType:mt}:undefined);}catch(e){recStream.getTracks().forEach(t=>t.stop());recStream=null;recNote('อัดเสียงในรูปแบบที่เบราว์เซอร์รองรับไม่ได้ ใช้วิธีอัปโหลดไฟล์แทน',true);return;}
+  recChunks=[];const r=rec;
+  r.ondataavailable=e=>{if(e.data&&e.data.size)recChunks.push(e.data);};
+  r.onstop=()=>{clearInterval(recTimer);const secs=(performance.now()-recT0)/1000;
+    if(recStream)recStream.getTracks().forEach(t=>t.stop());recStream=null;micAn=null;rec=null;if(mode==='rec'){mode='idle';if(!editing)setStatus('idle','พร้อม');}updRecUI();
+    const type=r.mimeType||mt||'audio/webm';const blob=new Blob(recChunks,{type});recChunks=[];
+    if(secs<0.6||blob.size<800){recNote('คลิปสั้นเกินไป กดอัดแล้วพูดอย่างน้อย 1 วินาที',true);return;}
+    const ext=type.includes('mp4')?'m4a':(type.includes('ogg')?'ogg':'webm');recN++;
+    addVoiceFile(new File([blob],'อัดเสียง '+recN+'.'+ext,{type}));selectVoice(voices[voices.length-1]);
+    recNote('บันทึกคลิป "อัดเสียง '+recN+'" ยาว '+fmt(secs)+' แล้ว กด "เล่นเสียงที่เลือก" เพื่อให้ใบหน้าพูดตาม');};
+  /* the face mouths along live while recording; the mic is not sent to the speakers */
+  if(ensureCtx()){try{micAn=actx.createAnalyser();micAn.fftSize=1024;micAn.smoothingTimeConstant=.45;actx.createMediaStreamSource(recStream).connect(micAn);}catch(e){micAn=null;}}
+  r.start(250);recT0=performance.now();mode='rec';setStatus('speaking','กำลังอัดเสียง');updRecUI();
+  recNote('กำลังอัด… พูดใส่ไมโครโฟน แล้วกด "หยุดอัด" (อัดได้นานสุด '+(REC_MAX/60)+' นาที)');
+  recTimer=setInterval(()=>{const s=(performance.now()-recT0)/1000;$('recTime').textContent=fmt(s);if(s>=REC_MAX&&rec)rec.stop();},250);}
+$('recBtn').addEventListener('click',()=>{if(rec){if(rec.state!=='inactive')rec.stop();}else startRec();});
+initRec();
+
 function selectVoice(v){activeVoice=v;if(mode==='audio')stopAll();audioEl.src=v.url;$('playAudio').disabled=v.error;renderVoices();updateVoiceMeta();}
 function removeVoice(v){const i=voices.indexOf(v);if(i<0)return;voices.splice(i,1);
   if(activeVoice===v){stopAll();activeVoice=null;audioEl.removeAttribute('src');$('playAudio').disabled=true;if(voices.length)selectVoice(voices[Math.max(0,i-1)]);}
@@ -672,9 +716,9 @@ function playActive(){if(!activeVoice||activeVoice.error)return;if(editing)setEd
   mode='audio';audioEl.currentTime=0;audioEl.play().then(()=>setStatus('speaking','กำลังพูด · '+activeVoice.name+' · สำเนียง'+activeVoice.accent)).catch(()=>{mode='idle';});}
 $('playAudio').addEventListener('click',playActive);
 audioEl.addEventListener('ended',()=>{if(mode==='audio'){mode='idle';setStatus('idle','พร้อม');}});
-function analyzeAudio(){
-  analyser.getFloatTimeDomainData(tbuf);let s=0;for(let i=0;i<tbuf.length;i++)s+=tbuf[i]*tbuf[i];const rms=Math.sqrt(s/tbuf.length);
-  analyser.getByteFrequencyData(fbuf);const hz=actx.sampleRate/analyser.fftSize;
+function analyzeAudio(an){an=an||analyser;
+  an.getFloatTimeDomainData(tbuf);let s=0;for(let i=0;i<tbuf.length;i++)s+=tbuf[i]*tbuf[i];const rms=Math.sqrt(s/tbuf.length);
+  an.getByteFrequencyData(fbuf);const hz=actx.sampleRate/an.fftSize;
   const band=(a,b)=>{const i0=Math.max(1,Math.floor(a/hz)),i1=Math.min(fbuf.length-1,Math.ceil(b/hz));let m=0;for(let i=i0;i<=i1;i++)m+=fbuf[i];return m/(i1-i0+1)/255;};
   const low=band(250,900),mid=band(1000,2600),high=band(3500,8000);
   const db=20*Math.log10(rms+1e-7);let open=Math.min(1,Math.max(0,(db+48)/32));open=Math.pow(open,1.25);
@@ -712,7 +756,7 @@ $('speakBtn').addEventListener('click',()=>{
   speechSynthesis.speak(u);
   clearTimeout(startGuard);startGuard=setTimeout(()=>{if(!started){speechSynthesis.cancel();simulate(text);}},1500);
 });
-function stopAll(){try{audioEl.pause();}catch(e){}if('speechSynthesis' in window)speechSynthesis.cancel();clearTimeout(simTimer);clearTimeout(startGuard);ttsOn=false;mode='idle';if(!editing)setStatus('idle','พร้อม');}
+function stopAll(){try{audioEl.pause();}catch(e){}if(rec&&rec.state!=='inactive')rec.stop();if('speechSynthesis' in window)speechSynthesis.cancel();clearTimeout(simTimer);clearTimeout(startGuard);ttsOn=false;mode='idle';if(!editing)setStatus('idle','พร้อม');}
 $('stopBtn').addEventListener('click',stopAll);
 
 /* ---------- Sliders ---------- */
@@ -732,6 +776,7 @@ function step(dt){
   let tgt={jaw:0,wide:0};
   if(!editing){
     if(mode==='audio'&&analyser&&!audioEl.paused)tgt=analyzeAudio();
+    else if(mode==='rec'&&micAn)tgt=analyzeAudio(micAn);
     else if(mode==='tts'&&ttsOn)tgt=synthMouth(dt);
   }
   tgt.jaw=Math.min(1.25,tgt.jaw*ctl.mouth);
