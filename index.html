@@ -133,6 +133,14 @@ textarea{width:100%;min-height:76px;resize:vertical;font:inherit;padding:10px;bo
 .voice .x{position:static;width:26px;height:26px}
 @media (max-width:440px){.voice{grid-template-columns:auto minmax(0,1fr) auto}.voice select{grid-column:2/3;max-width:none}}
 .empty{font-size:.82rem;color:var(--muted);padding:6px 2px}
+.sheet-box{border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px;background:var(--bg);min-width:0}
+.sheet-steps{margin:0;padding-left:1.3em;font-size:.85rem;display:flex;flex-direction:column;gap:2px}
+.sheet-box select{font:inherit;font-size:.88rem;padding:7px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);max-width:100%}
+.sheet-details summary{cursor:pointer;font-size:.85rem;color:var(--accent)}
+.sheet-details[open]{display:flex;flex-direction:column;gap:8px}
+.gridmap{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;max-width:320px;margin-top:8px}
+.gridmap span{border:1px dashed var(--line);border-radius:6px;padding:8px 4px;text-align:center;font-size:.75rem;background:var(--surface)}
+#promptText{min-height:180px;font-size:.78rem;font-family:var(--font-mono)}
 .rec .rec-dot{width:10px;height:10px;border-radius:50%;background:#C8423A;display:block;flex:none}
 .rec.recording{border-color:#C8423A;background:color-mix(in srgb,#C8423A 14%,var(--surface))}
 .rec.recording .rec-dot{border-radius:2px;animation:recpulse 1s ease-in-out infinite}
@@ -203,6 +211,38 @@ ul.tight{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px}
         </label>
         <div class="lib-head"><span>คลังรูป · กดเพื่อสลับ</span><span class="mono" id="photoCount">1 รูป</span></div>
         <div class="gallery" id="photoList" role="list"></div>
+        <div class="sheet-box">
+          <div class="lib-head"><span>สร้างตัวละครพูดได้จากรูปของคุณ</span><span class="mono">ตาราง 3×3</span></div>
+          <ol class="sheet-steps">
+            <li>เลือกสไตล์ แล้วกด <b>คัดลอกพรอมต์</b></li>
+            <li>เปิด AI สร้างภาพ (เช่น ChatGPT หรือ Gemini) แนบรูปใบหน้า แล้ววางพรอมต์</li>
+            <li>ดาวน์โหลดภาพตารางที่ได้ แล้วกด <b>นำเข้า Character Sheet</b></li>
+            <li>วางจุดตาและปากบนช่องแรก แล้วกด <b>เสร็จสิ้น</b> ระบบจะตัดรูปปาก ตาหลับ และท่าทางให้</li>
+          </ol>
+          <div class="row">
+            <label for="sheetStyle" class="note">สไตล์</label>
+            <select id="sheetStyle">
+              <option value="same">เหมือนรูปต้นฉบับ</option>
+              <option value="3d">การ์ตูน 3D แบบมาสคอต</option>
+              <option value="2d">การ์ตูน 2D</option>
+              <option value="anime">อนิเมะ</option>
+            </select>
+          </div>
+          <div class="row">
+            <button id="copyPrompt" class="primary">คัดลอกพรอมต์</button>
+            <label class="filebtn">นำเข้า Character Sheet<input type="file" id="sheetIn" accept="image/*"></label>
+          </div>
+          <p class="note" id="sheetNote" aria-live="polite">พรอมต์บังคับให้ทุกช่องจัดหน้าตำแหน่งเดียวกัน ระบบจึงตัดปากและตามาซ้อนได้พอดี</p>
+          <details class="sheet-details">
+            <summary>ดูพรอมต์และแผนผังช่อง</summary>
+            <div class="gridmap" aria-label="แผนผังช่องของ Character Sheet">
+              <span>1 ปากปิด</span><span>2 A · อา</span><span>3 E · เอ</span>
+              <span>4 I · อี</span><span>5 O · โอ</span><span>6 U · อู</span>
+              <span>7 หลับตา</span><span>8 โบกมือ</span><span>9 ไหว้</span>
+            </div>
+            <textarea id="promptText" readonly aria-label="พรอมต์สำหรับ AI สร้างภาพ"></textarea>
+          </details>
+        </div>
         <div class="lib-head" id="charHead" hidden><span>ตัวละครจาก Character Sheet · ปากเปลี่ยนตามรูป A E I O U</span><span class="mono" id="charCount"></span></div>
         <div class="gallery" id="charList" role="list" hidden></div>
         <div class="row">
@@ -532,7 +572,9 @@ pins.forEach(p=>{
     if(e.key==='ArrowLeft')v[0]-=st;else if(e.key==='ArrowRight')v[0]+=st;else if(e.key==='ArrowUp')v[1]-=st;else if(e.key==='ArrowDown')v[1]+=st;else h=false;
     if(h){e.preventDefault();v[0]=Math.min(.99,Math.max(.01,v[0]));v[1]=Math.min(.99,Math.max(.01,v[1]));placePins();}});
 });
-$('editBtn').addEventListener('click',()=>setEditing(!editing));
+$('editBtn').addEventListener('click',()=>{const leaving=editing;setEditing(!editing);
+  /* finishing the pins on an imported sheet (re)builds its character */
+  if(leaving&&activePhoto&&activePhoto.sheet)buildSheet(activePhoto);});
 
 /* ---------- Photo upload (+ optional built-in FaceDetector) ---------- */
 function centroid(pts){let x=0,y=0;pts.forEach(p=>{x+=p.x;y+=p.y;});return{x:x/pts.length,y:y/pts.length};}
@@ -608,19 +650,22 @@ async function loadCharacters(){
   return first;}
 /* redraw the composite (base pose + weighted mouth patches); returns true when it changed */
 function composeChar(p){const ch=p.char,g=ch.ctx;
-  let changed=ch.dirty;for(const v of VIS)if(Math.abs((ch.drawn[v]||0)-VW[v])>.004)changed=true;
+  const bw=ch.blink?S.blink:0;
+  let changed=ch.dirty||Math.abs((ch.drawn.blink||0)-bw)>.01;for(const v of VIS)if(Math.abs((ch.drawn[v]||0)-VW[v])>.004)changed=true;
   if(!changed)return false;
   g.globalAlpha=1;g.drawImage(p.canvas,0,0);
   /* progressive blend so the result is the weighted average of the base and each mouth shape */
   let acc=VW.X;
   for(const v of VIS){const m=ch.mouths[v],w=VW[v];if(!m||w<.004)continue;acc+=w;g.globalAlpha=Math.min(1,w/acc);g.drawImage(m.img,m.x,m.y);}
-  g.globalAlpha=1;for(const v of VIS)ch.drawn[v]=VW[v];ch.dirty=false;return true;}
+  /* eyes-closed sprite from the sheet replaces the shader's lid */
+  if(ch.blink&&bw>.01){g.globalAlpha=Math.min(1,bw);g.drawImage(ch.blink.img,ch.blink.x,ch.blink.y);}
+  g.globalAlpha=1;for(const v of VIS)ch.drawn[v]=VW[v];ch.drawn.blink=bw;ch.dirty=false;return true;}
 function charThumbs(p){if(p.char.thumbs)return p.char.thumbs;
   const W=p.canvas.width,H=p.canvas.height,ex=p.lm.eyeL,er=p.lm.eyeR,mo=p.lm.mouth;
   const ed=Math.hypot((er[0]-ex[0])*W,(er[1]-ex[1])*H),sz=ed*2,sx=mo[0]*W-sz/2,sy=mo[1]*H-ed*.3-sz/2,N=96,k=N/sz;
   const c=document.createElement('canvas');c.width=c.height=N;const g=c.getContext('2d');const out={};
   for(const v of VIS){g.drawImage(p.canvas,sx,sy,sz,sz,0,0,N,N);const m=p.char.mouths[v];
-    if(m)g.drawImage(m.img,(m.x-sx)*k,(m.y-sy)*k,m.img.naturalWidth*k,m.img.naturalHeight*k);
+    if(m)g.drawImage(m.img,(m.x-sx)*k,(m.y-sy)*k,(m.img.naturalWidth||m.img.width)*k,(m.img.naturalHeight||m.img.height)*k);
     out[v]=c.toDataURL('image/jpeg',.85);}
   return p.char.thumbs=out;}
 function renderVisemeStrip(){const box=$('visemeStrip');box.textContent='';const p=activePhoto;
@@ -628,6 +673,134 @@ function renderVisemeStrip(){const box=$('visemeStrip');box.textContent='';const
   VIS.forEach(v=>{const b=document.createElement('button');b.className='vis';b.dataset.v=v;b.setAttribute('aria-pressed',String(v===curVis));b.setAttribute('aria-label','ดูรูปปาก '+VIS_LABEL[v]);
     const im=document.createElement('img');im.src=th[v];im.alt='';b.append(im,document.createTextNode(VIS_SHORT[v]));
     b.addEventListener('click',()=>{if(editing)setEditing(false);previewVis=v;previewUntil=t+1.2;});box.appendChild(b);});}
+
+/* ---------- Character sheet made by an image generator: prompt + import ---------- */
+const SHEET_STYLE={
+  same:'Keep the exact look, art style and realism of the attached photo.',
+  '3d':'Render as a cute, high-quality 3D cartoon mascot (soft vinyl-toy look, studio lighting) that clearly keeps the person\'s face, hair and outfit.',
+  '2d':'Render as a clean, flat 2D cartoon illustration with bold outlines that clearly keeps the person\'s face, hair and outfit.',
+  anime:'Render in a polished anime style that clearly keeps the person\'s face, hair and outfit.'};
+function sheetPrompt(style){return [
+'Create a CHARACTER SHEET of the person/character in the attached image, for lip-sync animation.',
+SHEET_STYLE[style]||SHEET_STYLE.same,
+'',
+'LAYOUT (strict):',
+'- One square image, a 3x3 grid of 9 equal square panels, edge to edge.',
+'- Plain pure white background. No borders, no gaps, no text, no labels, no numbers, no logos, no watermark.',
+'- Every panel: the SAME character, head and shoulders, face looking straight at the camera.',
+'- The head must be the SAME size and at the EXACT same position in every panel (eyes at the same height, face centred). Do not tilt, turn or move the head.',
+'- Same lighting, same clothes, same colours in every panel. Only the parts listed below may change.',
+'',
+'PANELS (left to right, top to bottom):',
+'1. Mouth closed, relaxed neutral smile, eyes open.',
+'2. Saying "A" (as in "ah"): mouth wide open, jaw dropped, tongue visible.',
+'3. Saying "E" (as in "eh"): mouth half open, upper teeth visible.',
+'4. Saying "I" (as in "ee"): lips stretched wide, teeth together and visible.',
+'5. Saying "O" (as in "oh"): lips rounded into an open O shape.',
+'6. Saying "U" (as in "oo"): lips small, rounded and pushed forward.',
+'7. Eyes fully closed (blinking), mouth closed exactly like panel 1.',
+'8. Waving one hand beside the shoulder, face exactly like panel 1.',
+'9. Thai "wai" greeting: palms pressed together at the chest, face exactly like panel 1.',
+'',
+'Keep the eyes open in every panel except 7. Hands must not cover the face.'].join('\n');}
+function updatePrompt(){$('promptText').value=sheetPrompt($('sheetStyle').value);}
+$('sheetStyle').addEventListener('change',updatePrompt);updatePrompt();
+function sheetNote(text,warn){$('sheetNote').textContent=text;$('sheetNote').className=warn?'note warn':'note';}
+$('copyPrompt').addEventListener('click',()=>{const ta=$('promptText');updatePrompt();
+  const done=()=>sheetNote('คัดลอกพรอมต์แล้ว นำไปวางใน AI สร้างภาพพร้อมแนบรูปใบหน้า');
+  const fallback=()=>{$('copyPrompt').closest('.sheet-box').querySelector('details').open=true;ta.focus();ta.select();
+    sheetNote('คัดลอกอัตโนมัติไม่ได้ เลือกข้อความพรอมต์ไว้ให้แล้ว กด Ctrl+C (หรือ ⌘C) เพื่อคัดลอก',true);};
+  try{navigator.clipboard.writeText(ta.value).then(done,fallback);}catch(e){fallback();}});
+
+/* similarity map F(p)=s·p+o from the base panel into another panel */
+const F_ID={s:1,ox:0,oy:0};
+function grayOf(src,f){const w=Math.max(8,Math.round(src.width*f)),h=Math.max(8,Math.round(src.height*f));
+  const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(src,0,0,w,h);
+  const d=g.getImageData(0,0,w,h).data,out=new Float32Array(w*h);for(let i=0;i<w*h;i++)out[i]=.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2];return{g:out,w,h};}
+/* find where the face of `base` sits in `cell`: brute-force translation+scale on grey pixels of the
+   face box, ignoring the ellipses that are meant to differ (mouth, eyes) */
+function matchPanel(base,cell,box,center,skip,range){
+  const run=(f,cands)=>{const B=grayOf(base,f),C=grayOf(cell,f);const pts=[];
+    const x0=Math.max(0,Math.floor(box[0]*f)),y0=Math.max(0,Math.floor(box[1]*f)),x1=Math.min(B.w-1,Math.ceil(box[2]*f)),y1=Math.min(B.h-1,Math.ceil(box[3]*f));
+    const st=Math.max(1,Math.floor(Math.sqrt((x1-x0)*(y1-y0)/1500)));
+    for(let y=y0;y<=y1;y+=st)for(let x=x0;x<=x1;x+=st){let out=false;for(const e of skip){const dx=(x/f-e.cx)/e.rx,dy=(y/f-e.cy)/e.ry;if(dx*dx+dy*dy<1){out=true;break;}}if(!out)pts.push(x,y,B.g[y*B.w+x]);}
+    let mb=0;const n=pts.length/3;for(let i=2;i<pts.length;i+=3)mb+=pts[i];mb/=n;
+    const cx=center[0]*f,cy=center[1]*f,vals=new Float32Array(n);let best={err:1e18};
+    for(const [s,tx,ty] of cands){let mc=0;
+      for(let i=0,j=0;i<pts.length;i+=3,j++){let qx=Math.round(cx+s*(pts[i]-cx)+tx*f),qy=Math.round(cy+s*(pts[i+1]-cy)+ty*f);
+        qx=qx<0?0:(qx>=C.w?C.w-1:qx);qy=qy<0?0:(qy>=C.h?C.h-1:qy);vals[j]=C.g[qy*C.w+qx];mc+=vals[j];}
+      mc/=n;let err=0;for(let i=2,j=0;i<pts.length;i+=3,j++)err+=Math.abs(pts[i]-mb-(vals[j]-mc));
+      if(err<best.err)best={err,s,tx,ty};}
+    best.err/=n;return best;};
+  const W=base.width,f1=Math.min(1,110/W),f2=Math.min(1,420/W),c1=[];
+  const R=range*W,stp=1/f1;
+  for(let s=.9;s<=1.101;s+=.02)for(let tx=-R;tx<=R;tx+=stp)for(let ty=-R;ty<=R;ty+=stp)c1.push([s,tx,ty]);
+  const b1=run(f1,c1),c2=[];
+  for(let s=b1.s-.015;s<=b1.s+.0151;s+=.005)for(let tx=b1.tx-1.5*stp;tx<=b1.tx+1.5*stp;tx+=1/f2)for(let ty=b1.ty-1.5*stp;ty<=b1.ty+1.5*stp;ty+=1/f2)c2.push([s,tx,ty]);
+  const b=run(f2,c2);
+  return{s:b.s,ox:center[0]*(1-b.s)+b.tx,oy:center[1]*(1-b.s)+b.ty,err:b.err};}
+/* copy the ellipses of `src` (placed by Fsrc) into the frame of a pose (placed by Fdst), feathered */
+function makePatch(src,Fsrc,Fdst,ells,W,H){
+  const c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+  const a=Fdst.s/Fsrc.s;g.setTransform(a,0,0,a,Fdst.ox-a*Fsrc.ox,Fdst.oy-a*Fsrc.oy);g.drawImage(src,0,0);g.setTransform(1,0,0,1,0,0);
+  const m=document.createElement('canvas');m.width=W;m.height=H;const mg=m.getContext('2d');
+  for(const e of ells){mg.save();mg.translate(Fdst.s*e.cx+Fdst.ox,Fdst.s*e.cy+Fdst.oy);mg.scale(Fdst.s*e.rx,Fdst.s*e.ry);
+    const gr=mg.createRadialGradient(0,0,0,0,0,1);gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(.62,'rgba(0,0,0,1)');gr.addColorStop(1,'rgba(0,0,0,0)');
+    mg.fillStyle=gr;mg.fillRect(-1,-1,2,2);mg.restore();}
+  g.globalCompositeOperation='destination-in';g.drawImage(m,0,0);g.globalCompositeOperation='source-over';
+  return{img:c,x:0,y:0};}
+/* cut the sheet into 3×3 equal panels; the panels' own white backgrounds make trimming margins
+   unreliable, so small offsets are left to the alignment search instead */
+function sliceSheet(img){
+  const sw=img.naturalWidth,sh=img.naturalHeight,cw=sw/3,chh=sh/3,k=Math.min(1,640/Math.max(cw,chh));
+  const cells=[];for(let r=0;r<3;r++)for(let q=0;q<3;q++){const cc=document.createElement('canvas');cc.width=Math.round(cw*k);cc.height=Math.round(chh*k);
+    cc.getContext('2d').drawImage(img,q*cw,r*chh,cw,chh,0,0,cc.width,cc.height);cells.push(cc);}
+  return cells;}
+let sheetN=0;
+$('sheetIn').addEventListener('change',e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+  const url=URL.createObjectURL(f),img=new Image();
+  img.onload=()=>{URL.revokeObjectURL(url);const ar=img.naturalWidth/img.naturalHeight;
+    if(ar<.6||ar>1.7){sheetNote('ภาพนี้ไม่ใช่ตาราง 3×3 (สัดส่วนกว้างหรือสูงเกินไป) ลองสร้างใหม่ด้วยพรอมต์ แล้วนำเข้าอีกครั้ง',true);return;}
+    const cells=sliceSheet(img);sheetN++;const nm=f.name.replace(/\.[^.]+$/,'')||('ตัวละคร '+sheetN);
+    const L0={eyeL:[.4,.42],eyeR:[.6,.42],mouth:[.5,.62]};
+    const p={id:++uid,name:nm,poseName:'หน้าตรง',canvas:cells[0],thumb:makeThumb(cells[0]),lm:L0,sheet:{cells,name:nm}};
+    photos.push(p);activatePhoto(p,true);
+    $('photoNote').textContent='ลากจุดให้ตรงตาดำทั้งสองข้างและกึ่งกลางปากบนช่องแรก แล้วกด "เสร็จสิ้น" เพื่อสร้างตัวละคร';$('photoNote').className='note warn';
+    sheetNote('นำเข้า '+f.name+' แล้ว ตัดเป็น 9 ช่อง ขั้นต่อไปคือวางจุดใบหน้าบนภาพ');};
+  img.onerror=()=>{URL.revokeObjectURL(url);sheetNote('เปิดไฟล์ '+f.name+' ไม่ได้ ลองใช้ไฟล์ PNG หรือ JPG',true);};
+  img.src=url;});
+async function buildSheet(p){
+  const cells=p.sheet.cells,base=cells[0],W=base.width,H=base.height;
+  const P=k=>[p.lm[k][0]*W,p.lm[k][1]*H],eL=P('eyeL'),eR=P('eyeR'),mo=P('mouth');
+  const ed=Math.max(8,Math.hypot(eR[0]-eL[0],eR[1]-eL[1]));
+  const mouthE={cx:mo[0],cy:mo[1]+.12*ed,rx:.78*ed,ry:.55*ed};
+  const eyeE=[{cx:eL[0],cy:eL[1],rx:.48*ed,ry:.38*ed},{cx:eR[0],cy:eR[1],rx:.48*ed,ry:.38*ed}];
+  const box=[Math.min(eL[0],eR[0])-.95*ed,Math.min(eL[1],eR[1])-.85*ed,Math.max(eL[0],eR[0])+.95*ed,mo[1]+.75*ed];
+  const ctr=[(eL[0]+eR[0]+mo[0]*2)/4,(eL[1]+eR[1]+mo[1]*2)/4];
+  setStatus('edit','กำลังสร้างตัวละคร…');sheetNote('กำลังจัดตำแหน่งปากและตาจาก 9 ช่อง…');
+  await new Promise(r=>setTimeout(r,40));
+  const Fm={},vis=['A','E','I','O','U'];vis.forEach((v,i)=>{Fm[v]=matchPanel(base,cells[i+1],box,ctr,[mouthE],.16);});
+  const Fb=matchPanel(base,cells[6],box,ctr,eyeE,.16);
+  const poses=[{entry:p,cell:base,F:F_ID,name:'หน้าตรง'},
+    {cell:cells[7],F:matchPanel(base,cells[7],box,ctr,[mouthE],.18),name:'โบกมือ'},
+    {cell:cells[8],F:matchPanel(base,cells[8],box,ctr,[mouthE],.18),name:'ไหว้'}];
+  /* rebuilding replaces the poses made from this sheet before */
+  for(let i=photos.length-1;i>=0;i--)if(photos[i].sheetBase===p)photos.splice(i,1);
+  const at=photos.indexOf(p);let ins=at+1;
+  for(const ps of poses){const cw=ps.cell.width,chh=ps.cell.height,F=ps.F;
+    const mouths={};vis.forEach(v=>{mouths[v]=makePatch(cells[vis.indexOf(v)+1],Fm[v],F,[mouthE],cw,chh);});
+    const blink=makePatch(cells[6],Fb,F,eyeE,cw,chh);
+    const comp=document.createElement('canvas');comp.width=cw;comp.height=chh;
+    const char={mouths,blink,comp,ctx:comp.getContext('2d'),drawn:{},dirty:true,thumbs:null};
+    if(ps.entry){p.char=char;p.name=p.sheet.name+' · หน้าตรง';p.eye=[1,1];continue;}
+    const tl=k=>[(F.s*p.lm[k][0]*W+F.ox)/cw,(F.s*p.lm[k][1]*H+F.oy)/chh];
+    photos.splice(ins++,0,{id:++uid,name:p.sheet.name+' · '+ps.name,poseName:ps.name,canvas:ps.cell,thumb:makeThumb(ps.cell),
+      lm:{eyeL:tl('eyeL'),eyeR:tl('eyeR'),mouth:tl('mouth')},eye:[1,1],sheetBase:p,char});}
+  /* the average leftover difference tells whether the generator kept the panels aligned */
+  const errs=vis.map(v=>Fm[v].err).concat([Fb.err]);const worst=Math.max(...errs);
+  activatePhoto(p);setStatus('idle','พร้อม · '+p.name);
+  sheetNote(worst>28?'สร้างตัวละครแล้ว แต่บางช่องจัดหน้าไม่ตรงกัน ปากหรือตาอาจเหลื่อม ถ้าเห็นชัด ให้สร้าง Character Sheet ใหม่ หรือปรับจุดใบหน้าแล้วกดเสร็จสิ้นอีกครั้ง':
+    'สร้างตัวละครแล้ว 3 ท่า (หน้าตรง โบกมือ ไหว้) พร้อมรูปปาก A E I O U และตาหลับ กดรูปปากใต้ภาพเพื่อดูทีละแบบ',worst>28);}
 
 /* ---------- Audio: uploaded voice clip ---------- */
 const audioEl=new Audio();audioEl.preload='auto';
@@ -812,7 +985,7 @@ function draw(){
   if(isChar&&composeChar(activePhoto)){gl.bindTexture(gl.TEXTURE_2D,texture);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,activePhoto.char.comp);}
   const ey=(activePhoto&&activePhoto.eye)||[1,1];gl.uniform2f(U.uEye,ey[0],ey[1]);
   /* a character's mouth comes from its sheet sprites, so the shader's mouth warp is off */
-  gl.uniform1f(U.uJaw,isChar?0:S.jaw);gl.uniform1f(U.uWide,isChar?0:S.wide);gl.uniform1f(U.uBlink,S.blink);gl.uniform1f(U.uBrow,S.brow);gl.uniform1f(U.uPx,1/canvas.height);
+  gl.uniform1f(U.uJaw,isChar?0:S.jaw);gl.uniform1f(U.uWide,isChar?0:S.wide);gl.uniform1f(U.uBlink,isChar&&activePhoto.char.blink?0:S.blink);gl.uniform1f(U.uBrow,S.brow);gl.uniform1f(U.uPx,1/canvas.height);
   gl.uniform2f(U.uEyeL,ex[0]*aspect,ex[1]);gl.uniform2f(U.uEyeR,er[0]*aspect,er[1]);gl.uniform2f(U.uMouth,mo[0]*aspect,mo[1]);
   gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
 }
