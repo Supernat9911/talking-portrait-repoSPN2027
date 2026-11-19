@@ -153,6 +153,17 @@ textarea{width:100%;min-height:76px;resize:vertical;font:inherit;padding:10px;bo
 .gridmap{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;max-width:320px;margin-top:8px}
 .gridmap span{border:1px dashed var(--line);border-radius:6px;padding:8px 4px;text-align:center;font-size:.75rem;background:var(--surface)}
 #promptText{min-height:180px;font-size:.78rem;font-family:var(--font-mono)}
+.clone-box{border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px;background:var(--bg);min-width:0}
+.clone-grid{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 10px;align-items:center;font-size:.85rem}
+.clone-grid input,.clone-grid select{font:inherit;font-size:.85rem;padding:7px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);width:100%;min-width:0}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:.84rem}
+.check input{margin-top:.3em;accent-color:var(--accent)}
+.clone-list{display:flex;flex-direction:column;gap:6px}
+.clone-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font-size:.85rem}
+.clone-item.active{border-color:var(--accent);background:var(--accent-soft)}
+.clone-item .cname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.clone-item .cmeta{font-size:.72rem;color:var(--muted)}
+.clone-item .x{position:static;width:auto;height:26px;padding:0 8px;border-radius:13px;font-size:.78rem}
 .rec .rec-dot{width:10px;height:10px;border-radius:50%;background:#C8423A;display:block;flex:none}
 .rec.recording{border-color:#C8423A;background:color-mix(in srgb,#C8423A 14%,var(--surface))}
 .rec.recording .rec-dot{border-radius:2px;animation:recpulse 1s ease-in-out infinite}
@@ -322,6 +333,32 @@ ul.tight{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px}
           <button id="stopBtn">หยุด</button>
         </div>
         <p class="note" id="voiceNote">กำลังตรวจหาเสียงภาษาไทยในเครื่อง…</p>
+
+        <div class="clone-box" id="cloneBox">
+          <div class="lib-head"><span>โคลนเสียง · พูดข้อความใหม่ด้วยเสียงจากคลิป</span><span class="mono" id="cloneStatus">ยังไม่มีเสียงโคลน</span></div>
+          <ol class="sheet-steps">
+            <li>เลือกคลิปเสียงต้นแบบในคลังเสียงด้านบน (อัปโหลดหรืออัดก็ได้ ยาว 30 วินาทีขึ้นไป เสียงชัด ไม่มีเพลง)</li>
+            <li>ใส่ API key แล้วกด <b>โคลนจากคลิปที่เลือก</b></li>
+            <li>พิมพ์ข้อความในช่องด้านบน แล้วกด <b>พูดด้วยเสียงโคลน</b> ใบหน้าจะพูดตามด้วยเสียงนั้น</li>
+          </ol>
+          <div class="clone-grid">
+            <label for="cloneProv">ระบบ</label>
+            <select id="cloneProv"><option value="eleven">ElevenLabs</option><option value="custom">เซิร์ฟเวอร์ของตัวเอง (F5-TTS)</option></select>
+            <label for="cloneKey" data-p="eleven">API key</label>
+            <input id="cloneKey" data-p="eleven" type="password" autocomplete="off" spellcheck="false" placeholder="วาง API key จาก ElevenLabs">
+            <label for="cloneModel" data-p="eleven">โมเดล</label>
+            <input id="cloneModel" data-p="eleven" list="cloneModels" value="eleven_v3" spellcheck="false">
+            <label for="cloneUrl" data-p="custom">ที่อยู่เซิร์ฟเวอร์</label>
+            <input id="cloneUrl" data-p="custom" value="http://localhost:8000" spellcheck="false">
+          </div>
+          <datalist id="cloneModels"><option value="eleven_v3"><option value="eleven_multilingual_v2"><option value="eleven_flash_v2_5"></datalist>
+          <label class="check"><input type="checkbox" id="cloneRemember"> จำการตั้งค่าและรายการเสียงโคลนไว้ในเบราว์เซอร์นี้ (รวม API key)</label>
+          <label class="check"><input type="checkbox" id="cloneConsent"> เสียงในคลิปเป็นของฉัน หรือเจ้าของเสียงยินยอมให้โคลนแล้ว</label>
+          <div class="row"><button id="cloneMake">โคลนจากคลิปที่เลือก</button></div>
+          <div class="clone-list" id="cloneList" role="radiogroup" aria-label="เสียงโคลน"></div>
+          <div class="row"><button id="cloneSpeak" class="primary" disabled>พูดด้วยเสียงโคลน</button></div>
+          <p class="note" id="cloneNote" aria-live="polite">ElevenLabs ต้องใช้แพ็กเกจที่โคลนเสียงได้ ส่วนเซิร์ฟเวอร์ของตัวเองใช้ tools/voice_server.py บนเครื่องที่มี GPU</p>
+        </div>
       </div>
 
       <div class="step">
@@ -974,6 +1011,91 @@ function analyzeAudio(an){an=an||analyser;
   const wide=open>0.06?Math.max(-1,Math.min(1,(mid-low)/(mid+low+0.02)*2.4+0.2)):0;
   return{jaw:open,wide};
 }
+
+/* ---------- Voice cloning (ElevenLabs or your own F5-TTS server) ---------- */
+const CLONE_STORE='tp.clone.v1',EL_API='https://api.elevenlabs.io/v1';
+let clones=[],activeClone=null,cloneBusy=false;
+const cProv=()=>$('cloneProv').value;
+function cloneNote(t,warn){$('cloneNote').textContent=t;$('cloneNote').className=warn?'note warn':'note';}
+function syncCloneFields(){const pv=cProv();document.querySelectorAll('#cloneBox [data-p]').forEach(el=>{el.hidden=el.dataset.p!==pv;});}
+function saveClone(){try{if(!$('cloneRemember').checked){localStorage.removeItem(CLONE_STORE);return;}
+  localStorage.setItem(CLONE_STORE,JSON.stringify({prov:cProv(),key:$('cloneKey').value,model:$('cloneModel').value,url:$('cloneUrl').value,
+    voices:clones,active:activeClone&&activeClone.id}));}catch(e){}}
+function loadClone(){try{const c=JSON.parse(localStorage.getItem(CLONE_STORE)||'null');if(!c)return;
+  $('cloneRemember').checked=true;$('cloneProv').value=c.prov||'eleven';$('cloneKey').value=c.key||'';$('cloneModel').value=c.model||'eleven_v3';$('cloneUrl').value=c.url||'http://localhost:8000';
+  clones=Array.isArray(c.voices)?c.voices.filter(v=>v&&v.id&&v.prov):[];activeClone=clones.find(v=>v.id===c.active)||clones[0]||null;}catch(e){}}
+function renderClones(){const box=$('cloneList');box.textContent='';
+  clones.forEach(c=>{const row=document.createElement('div');row.className='clone-item'+(c===activeClone?' active':'');
+    const r=document.createElement('input');r.type='radio';r.name='cloneSel';r.checked=c===activeClone;r.setAttribute('aria-label','ใช้เสียง '+c.name);
+    r.addEventListener('change',()=>{activeClone=c;renderClones();saveClone();});
+    const info=document.createElement('div');info.style.minWidth='0';const n=document.createElement('div');n.className='cname';n.textContent=c.name;
+    const m=document.createElement('div');m.className='cmeta';m.textContent=(c.prov==='eleven'?'ElevenLabs':'เซิร์ฟเวอร์ของตัวเอง')+' · สำเนียง'+c.accent;info.append(n,m);
+    info.addEventListener('click',()=>{activeClone=c;renderClones();saveClone();});
+    const x=document.createElement('button');x.className='x';x.textContent='ลบ';x.setAttribute('aria-label','ลบเสียงโคลน '+c.name);
+    /* two clicks: the first asks, the second deletes (also on ElevenLabs, to free the voice slot) */
+    x.addEventListener('click',()=>{if(x.dataset.armed){removeClone(c);return;}x.dataset.armed='1';x.textContent='ยืนยันลบ';setTimeout(()=>{if(x.isConnected){delete x.dataset.armed;x.textContent='ลบ';}},3000);});
+    row.append(r,info,x);box.appendChild(row);});
+  $('cloneStatus').textContent=clones.length?(clones.length+' เสียง'):'ยังไม่มีเสียงโคลน';
+  $('cloneSpeak').disabled=!activeClone||cloneBusy;}
+async function readErr(r){let msg='';try{const j=await r.clone().json();const d=j&&(j.detail||j.error||j);msg=(d&&(d.message||d.status||(typeof d==='string'?d:'')))||'';}catch(e){try{msg=(await r.text()).slice(0,200);}catch(e2){}}
+  const e=new Error(msg||('HTTP '+r.status));e.status=r.status;e.code=(()=>{try{return JSON.stringify(msg)}catch(_){return''}})();return e;}
+function explainErr(e,pv){const m=(e&&e.message)||'';
+  if(e instanceof TypeError||/Failed to fetch|NetworkError|Load failed/i.test(m))
+    return pv==='eleven'?'เชื่อมต่อ ElevenLabs ไม่ได้ ถ้าเปิดหน้านี้ผ่านลิงก์ claude.ai หน้านี้ติดต่อเว็บภายนอกไม่ได้ ให้เปิดไฟล์ index.html ในเบราว์เซอร์โดยตรง หรือเช็กอินเทอร์เน็ต':
+      'เชื่อมต่อเซิร์ฟเวอร์ '+$('cloneUrl').value+' ไม่ได้ ตรวจว่ารัน tools/voice_server.py อยู่ และที่อยู่ถูกต้อง';
+  if(e.status===401)return 'API key ไม่ถูกต้อง หรือหมดอายุ ตรวจ key ใน ElevenLabs แล้ววางใหม่';
+  if(/instant_voice_cloning|can_not_use|subscription|plan/i.test(m))return 'แพ็กเกจ ElevenLabs ที่ใช้อยู่โคลนเสียงไม่ได้ ต้องอัปเกรดเป็นแพ็กเกจที่มี Instant Voice Cloning';
+  if(/quota|credits|limit/i.test(m))return 'เครดิตหรือโควตาของ ElevenLabs ไม่พอ ('+m+')';
+  if(/model/i.test(m))return 'โมเดลนี้ใช้ไม่ได้ ('+m+') ลองเปลี่ยนชื่อโมเดล เช่น eleven_v3';
+  return 'ทำไม่สำเร็จ: '+m;}
+async function cloneCreate(name,blob,filename){const pv=cProv(),fd=new FormData();
+  if(pv==='eleven'){const key=$('cloneKey').value.trim();if(!key)throw Object.assign(new Error('ใส่ API key ก่อน'),{local:true});
+    fd.append('name',name);fd.append('files',blob,filename);fd.append('remove_background_noise','true');fd.append('description','Talking Portrait voice clone');
+    const r=await fetch(EL_API+'/voices/add',{method:'POST',headers:{'xi-api-key':key},body:fd});if(!r.ok)throw await readErr(r);
+    const j=await r.json();if(!j.voice_id)throw new Error('ไม่ได้รับ voice_id');return{id:j.voice_id,verify:!!j.requires_verification};}
+  fd.append('name',name);fd.append('file',blob,filename);
+  const r=await fetch($('cloneUrl').value.replace(/\/+$/,'')+'/clone',{method:'POST',body:fd});if(!r.ok)throw await readErr(r);
+  const j=await r.json();if(!j.voice_id)throw new Error('เซิร์ฟเวอร์ไม่ส่ง voice_id กลับมา');return{id:j.voice_id};}
+async function cloneTTS(c,text){
+  if(c.prov==='eleven'){const key=$('cloneKey').value.trim();if(!key)throw Object.assign(new Error('ใส่ API key ก่อน'),{local:true});
+    const r=await fetch(EL_API+'/text-to-speech/'+encodeURIComponent(c.id)+'?output_format=mp3_44100_128',{method:'POST',
+      headers:{'xi-api-key':key,'Content-Type':'application/json','Accept':'audio/mpeg'},
+      body:JSON.stringify({text,model_id:$('cloneModel').value.trim()||'eleven_v3',voice_settings:{stability:.5,similarity_boost:.85}})});
+    if(!r.ok)throw await readErr(r);return await r.blob();}
+  const r=await fetch(c.url.replace(/\/+$/,'')+'/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({voice_id:c.id,text,language:'th'})});
+  if(!r.ok)throw await readErr(r);return await r.blob();}
+function setCloneBusy(on,label){cloneBusy=on;$('cloneMake').disabled=on;$('cloneSpeak').disabled=on||!activeClone;
+  if(label)$(label).textContent=on?'กำลังทำงาน…':($(label).dataset.idle||$(label).textContent);}
+async function removeClone(c){const i=clones.indexOf(c);if(i<0)return;clones.splice(i,1);if(activeClone===c)activeClone=clones[0]||null;renderClones();saveClone();
+  if(c.prov==='eleven'&&$('cloneKey').value.trim()){try{await fetch(EL_API+'/voices/'+encodeURIComponent(c.id),{method:'DELETE',headers:{'xi-api-key':$('cloneKey').value.trim()}});}catch(e){}}
+  cloneNote('ลบเสียงโคลน '+c.name+' แล้ว');}
+$('cloneMake').dataset.idle=$('cloneMake').textContent;$('cloneSpeak').dataset.idle=$('cloneSpeak').textContent;
+$('cloneProv').addEventListener('change',()=>{syncCloneFields();saveClone();});
+['cloneKey','cloneModel','cloneUrl'].forEach(id=>$(id).addEventListener('change',saveClone));
+$('cloneRemember').addEventListener('change',()=>{saveClone();cloneNote($('cloneRemember').checked?'จะจำการตั้งค่าไว้ในเบราว์เซอร์นี้ อย่าเปิดตัวเลือกนี้บนเครื่องที่ใช้ร่วมกับคนอื่น':'ล้างการตั้งค่าที่จำไว้แล้ว');});
+$('cloneMake').addEventListener('click',async()=>{if(cloneBusy)return;
+  if(!activeVoice||activeVoice.error){cloneNote('เลือกคลิปเสียงต้นแบบในคลังเสียงก่อน (อัปโหลดหรืออัดเสียง)',true);return;}
+  if(!$('cloneConsent').checked){cloneNote('ติ๊กยืนยันก่อนว่าเสียงเป็นของคุณ หรือเจ้าของเสียงยินยอมแล้ว',true);$('cloneConsent').focus();return;}
+  if(isFinite(activeVoice.duration)&&activeVoice.duration<8)cloneNote('คลิปนี้สั้น ('+fmt(activeVoice.duration)+') เสียงโคลนอาจไม่เหมือน แนะนำ 30 วินาทีขึ้นไป',true);
+  const src=activeVoice,pv=cProv();setCloneBusy(true,'cloneMake');
+  try{const blob=await (await fetch(src.url)).blob();const name=src.name.replace(/\.[^.]+$/,'');
+    const res=await cloneCreate(name,blob,src.name);
+    const c={prov:pv,id:res.id,name,accent:src.accent,url:pv==='custom'?$('cloneUrl').value:undefined};
+    clones.push(c);activeClone=c;renderClones();saveClone();
+    cloneNote(res.verify?'โคลนแล้ว แต่ ElevenLabs ขอให้ยืนยันเสียงก่อนใช้งาน ทำตามขั้นตอนในเว็บ ElevenLabs แล้วกลับมาพูดได้':'โคลนเสียง "'+name+'" แล้ว พิมพ์ข้อความแล้วกด "พูดด้วยเสียงโคลน"');}
+  catch(e){cloneNote(e.local?e.message:explainErr(e,pv),true);}
+  finally{setCloneBusy(false,'cloneMake');renderClones();}});
+$('cloneSpeak').addEventListener('click',async()=>{if(cloneBusy||!activeClone)return;const text=$('ttsText').value.trim();
+  if(!text){cloneNote('พิมพ์ข้อความที่จะให้พูดก่อน',true);return;}
+  const c=activeClone;setCloneBusy(true,'cloneSpeak');cloneNote('กำลังสร้างเสียง…');
+  try{const blob=await cloneTTS(c,text);if(!blob.size)throw new Error('ได้ไฟล์เสียงว่าง');
+    const short=text.length>24?text.slice(0,24)+'…':text,type=blob.type&&blob.type.startsWith('audio/')?blob.type:'audio/mpeg';
+    const ext=type.includes('wav')?'wav':(type.includes('ogg')?'ogg':'mp3');
+    await addVoiceFile(new File([blob],c.name+' · '+short+'.'+ext,{type}));const v=voices[voices.length-1];v.accent=c.accent;
+    selectVoice(v);playActive();cloneNote('สร้างเสียงแล้ว และเก็บไว้ในคลังเสียง ถ้าไม่เล่นเอง กด "เล่นเสียงที่เลือก"');}
+  catch(e){cloneNote(e.local?e.message:explainErr(e,c.prov),true);}
+  finally{setCloneBusy(false,'cloneSpeak');}});
+loadClone();syncCloneFields();renderClones();
 
 /* ---------- Text-to-speech (device voices) ---------- */
 let thaiVoice=null;
