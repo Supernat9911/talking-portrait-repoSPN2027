@@ -1,0 +1,719 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+</head>
+<body>
+<title>สตูดิโอใบหน้าพูดได้</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a studio workspace — dark "stage" monitor on the left, numbered setup steps on the right, system blueprint below. */
+:root{
+  --bg:#EDF1F2; --surface:#FFFFFF; --ink:#152025; --muted:#56666E; --line:#D2DADD;
+  --accent:#0E7470; --accent-soft:#D5ECEA; --accent-ink:#FFFFFF;
+  --warm:#B8741F; --stage:#162024; --stage-ink:#DCE6E9; --stage-line:#2B3A40;
+  --font-display:"Bai Jamjuree","IBM Plex Sans Thai",system-ui,sans-serif;
+  --font-body:"IBM Plex Sans Thai",system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1416; --surface:#162024; --ink:#E2EAEC; --muted:#93A4AB; --line:#29373C;
+  --accent:#3DB6AE; --accent-soft:#16312F; --accent-ink:#06201E;
+  --warm:#E0A253; --stage:#091012; --stage-ink:#DCE6E9; --stage-line:#24333A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1416; --surface:#162024; --ink:#E2EAEC; --muted:#93A4AB; --line:#29373C;
+  --accent:#3DB6AE; --accent-soft:#16312F; --accent-ink:#06201E;
+  --warm:#E0A253; --stage:#091012; --stage-ink:#DCE6E9; --stage-line:#24333A; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.page{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;line-height:1.25}
+h1{font-size:clamp(1.5rem,2.6vw,2rem);font-weight:700}
+h2{font-size:1.45rem;font-weight:700}
+h3{font-size:1.05rem;font-weight:600}
+p{margin:0}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+header.top .lede{color:var(--muted);max-width:62ch}
+
+.work{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:900px){.work{grid-template-columns:minmax(0,1fr)}}
+
+/* Stage */
+.stage{background:var(--stage);color:var(--stage-ink);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.stage-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:.75rem;padding:4px 10px;border-radius:999px;border:1px solid var(--stage-line);color:var(--stage-ink)}
+.chip i{width:8px;height:8px;border-radius:50%;background:#6B7C83;display:block}
+.chip[data-state="speaking"] i{background:var(--warm);box-shadow:0 0 0 4px color-mix(in srgb,var(--warm) 25%,transparent)}
+.chip[data-state="edit"] i{background:var(--accent)}
+.stage-wrap{--ar:0.8;position:relative;width:min(100%,calc(62vh * var(--ar)));aspect-ratio:var(--ar);max-width:100%;margin:0 auto;border-radius:8px;overflow:hidden;background:#000;touch-action:none}
+.stage-wrap canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.stage-wrap.drag{outline:2px dashed var(--warm);outline-offset:-6px}
+.pins{position:absolute;inset:0;pointer-events:none}
+.pin{position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;border:2px solid #fff;background:color-mix(in srgb,var(--accent) 70%,transparent);
+  box-shadow:0 0 0 2px rgba(0,0,0,.45);cursor:grab;pointer-events:auto;padding:0}
+.pin:focus-visible{outline:3px solid var(--warm);outline-offset:2px}
+.pin::after{content:attr(data-label);position:absolute;left:26px;top:50%;transform:translateY(-50%);white-space:nowrap;font-family:var(--font-body);font-size:.72rem;
+  background:rgba(0,0,0,.72);color:#fff;padding:1px 7px;border-radius:4px}
+.pin[data-key="eyeL"]::after{left:auto;right:26px}
+.stage:not(.editing) .pins{display:none}
+.no-gl{padding:24px;text-align:center}
+
+.meters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:520px){.meters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.meter{display:flex;flex-direction:column;gap:4px;min-width:0}
+.meter .lab{font-size:.72rem;color:#9FB0B6;display:flex;justify-content:space-between;gap:6px}
+.meter .bar{height:6px;border-radius:3px;background:var(--stage-line);overflow:hidden}
+.meter .bar b{display:block;height:100%;width:0;background:var(--warm);border-radius:3px}
+.meter.v .bar b{background:var(--accent)}
+.viseme{font-family:var(--font-mono);font-size:.8rem;color:var(--stage-ink)}
+
+/* Controls */
+.steps{display:flex;flex-direction:column;gap:14px;min-width:0}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.step-head{display:flex;gap:12px;align-items:baseline}
+.num{font-family:var(--font-mono);font-size:.8rem;color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:0 6px;flex:none}
+.step-head p{color:var(--muted);font-size:.88rem}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button,.filebtn{font:inherit;font-size:.9rem;font-weight:500;border-radius:8px;padding:8px 14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+button:hover,.filebtn:hover{border-color:var(--accent)}
+button:focus-visible,.filebtn:focus-within,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button[disabled]{opacity:.45;cursor:not-allowed}
+button[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}
+.filebtn input{position:absolute;opacity:0;width:1px;height:1px}
+.filebtn{position:relative}
+.note{font-size:.84rem;color:var(--muted)}
+.note.warn{color:var(--warm)}
+textarea{width:100%;min-height:76px;resize:vertical;font:inherit;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.sliders{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+.slider{display:grid;grid-template-columns:minmax(0,9rem) minmax(0,1fr) 3rem;gap:10px;align-items:center;font-size:.88rem}
+.slider input{width:100%;accent-color:var(--accent)}
+.slider output{font-family:var(--font-mono);font-size:.8rem;text-align:right;color:var(--muted)}
+.filemeta{font-family:var(--font-mono);font-size:.8rem;color:var(--muted);overflow-wrap:anywhere}
+
+/* Upload zones + libraries */
+.drop{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:18px 14px;border:1.5px dashed var(--line);border-radius:10px;background:var(--bg);cursor:pointer;text-align:center;transition:border-color .15s,background .15s}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.drop input{position:absolute;opacity:0;width:1px;height:1px}
+.drop-icon{width:28px;height:28px;color:var(--accent)}
+.drop-title{font-weight:600;font-size:.92rem}
+.drop-sub{font-size:.78rem;color:var(--muted)}
+.lib-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:.78rem;color:var(--muted)}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}
+.thumb-wrap{position:relative}
+.thumb{display:block;width:100%;aspect-ratio:1;padding:0;border-radius:8px;overflow:hidden;border:2px solid var(--line);background:var(--bg)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.x{position:absolute;top:-6px;right:-6px;width:22px;height:22px;padding:0;justify-content:center;border-radius:50%;font-size:.85rem;line-height:1;background:var(--surface);color:var(--muted)}
+.voices{display:flex;flex-direction:column;gap:8px}
+.voice{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.voice.active{border-color:var(--accent);background:var(--accent-soft)}
+.voice .vplay{width:34px;height:34px;padding:0;justify-content:center;border-radius:50%}
+.voice .vmeta{display:flex;flex-direction:column;align-items:stretch;gap:3px;min-width:0;padding:2px 4px;border:0;background:transparent;text-align:left}
+.vname{font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vinfo{font-size:.72rem;color:var(--muted)}
+.wave{width:100%;height:24px;display:block}
+.voice select{font:inherit;font-size:.8rem;padding:5px 6px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);max-width:8.5rem}
+.voice .x{position:static;width:26px;height:26px}
+@media (max-width:440px){.voice{grid-template-columns:auto minmax(0,1fr) auto}.voice select{grid-column:2/3;max-width:none}}
+.empty{font-size:.82rem;color:var(--muted);padding:6px 2px}
+
+/* Blueprint */
+.blueprint{display:flex;flex-direction:column;gap:22px;border-top:1px solid var(--line);padding-top:28px}
+.blueprint > p{max-width:70ch;color:var(--muted)}
+.diagram{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto}
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+@media (max-width:820px){.cols{grid-template-columns:minmax(0,1fr)}}
+.block{display:flex;flex-direction:column;gap:10px;min-width:0}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;font-size:.78rem;color:var(--muted);background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td.num-cell{font-family:var(--font-mono);white-space:nowrap;font-variant-numeric:tabular-nums}
+.callout{border-left:3px solid var(--warm);padding:4px 0 4px 14px;display:flex;flex-direction:column;gap:6px}
+.callout p{color:var(--ink);max-width:68ch}
+ul.tight{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<div class="page">
+  <header class="top">
+    <div>
+      <div class="eyebrow">ต้นแบบ · Talking Portrait</div>
+      <h1>สตูดิโอใบหน้าพูดได้</h1>
+    </div>
+    <p class="lede">อัปโหลดรูปหน้าตรง วางจุดตากับปาก แล้วใส่เสียงพูด ใบหน้าจะขยับปาก กะพริบตา และขยับศีรษะตามจังหวะเสียง ทุกอย่างประมวลผลในเบราว์เซอร์นี้ ไม่มีการส่งไฟล์ออกไปไหน</p>
+  </header>
+
+  <section class="work">
+    <div class="stage" id="stage">
+      <div class="stage-bar">
+        <span class="chip" id="status" data-state="idle"><i></i><span id="statusText">พร้อม · ภาพตัวอย่าง</span></span>
+        <span class="viseme" id="viseme" title="รูปปากที่ระบบประเมินจากเสียง">รูปปาก: M · ปิด</span>
+      </div>
+      <div class="stage-wrap" id="stageWrap">
+        <canvas id="face" aria-label="ใบหน้าที่กำลังเคลื่อนไหว"></canvas>
+        <div class="pins" id="pins">
+          <button class="pin" data-key="eyeL" data-label="ตาซ้าย" aria-label="จุดตาซ้าย ใช้ลูกศรเพื่อเลื่อน"></button>
+          <button class="pin" data-key="eyeR" data-label="ตาขวา" aria-label="จุดตาขวา ใช้ลูกศรเพื่อเลื่อน"></button>
+          <button class="pin" data-key="mouth" data-label="กลางปาก" aria-label="จุดกลางปาก ใช้ลูกศรเพื่อเลื่อน"></button>
+        </div>
+        <div class="no-gl" id="noGL" hidden>เบราว์เซอร์นี้เปิด WebGL ไม่ได้ จึงแสดงการเคลื่อนไหวไม่ได้</div>
+      </div>
+      <div class="meters" aria-hidden="true">
+        <div class="meter"><div class="lab"><span>ขากรรไกร</span><span class="mono" id="mJawV">0</span></div><div class="bar"><b id="mJaw"></b></div></div>
+        <div class="meter v"><div class="lab"><span>กว้าง ↔ ห่อ</span><span class="mono" id="mWideV">0</span></div><div class="bar"><b id="mWide"></b></div></div>
+        <div class="meter v"><div class="lab"><span>เปลือกตา</span><span class="mono" id="mBlinkV">0</span></div><div class="bar"><b id="mBlink"></b></div></div>
+        <div class="meter"><div class="lab"><span>เอียงศีรษะ</span><span class="mono" id="mHeadV">0°</span></div><div class="bar"><b id="mHead"></b></div></div>
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-head"><span class="num">1</span><div><h3>รูปใบหน้า</h3><p>ใช้รูปหน้าตรง ปากปิด แสงสม่ำเสมอ ลากไฟล์มาวางบนภาพก็ได้</p></div></div>
+        <label class="drop" id="photoDrop">
+          <input type="file" id="photoIn" accept="image/*" multiple>
+          <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="12" cy="11" r="3.2"/><path d="M6.5 20c1-3 3-4.5 5.5-4.5s4.5 1.5 5.5 4.5"/></svg>
+          <span class="drop-title">ลากรูปใบหน้ามาวาง หรือคลิกเพื่อเลือก</span>
+          <span class="drop-sub">JPG, PNG, WebP · เลือกได้หลายรูป</span>
+        </label>
+        <div class="lib-head"><span>คลังรูป · กดเพื่อสลับ</span><span class="mono" id="photoCount">1 รูป</span></div>
+        <div class="gallery" id="photoList" role="list"></div>
+        <div class="row">
+          <button id="editBtn" aria-pressed="false">ปรับจุดใบหน้า</button>
+        </div>
+        <p class="note" id="photoNote">วางจุดให้ตรงตาดำทั้งสองข้างและกึ่งกลางร่องปาก ทุกการขยับคำนวณจาก 3 จุดนี้</p>
+      </div>
+
+      <div class="step">
+        <div class="step-head"><span class="num">2</span><div><h3>เสียงพูด</h3><p>อัปโหลดคลิปเสียงในสำเนียงที่ต้องการ หรือพิมพ์ข้อความให้เสียงสังเคราะห์ของเครื่องอ่าน</p></div></div>
+        <label class="drop" id="audioDrop">
+          <input type="file" id="audioIn" accept="audio/*" multiple>
+          <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M3 12h1M6.5 8v8M10 5v14M13.5 9v6M17 6.5v11M20.5 11v2"/></svg>
+          <span class="drop-title">ลากคลิปเสียงมาวาง หรือคลิกเพื่อเลือก</span>
+          <span class="drop-sub">mp3, wav, m4a, ogg · 10–60 วินาที · อัดในห้องเงียบ</span>
+        </label>
+        <div class="lib-head"><span>คลังเสียง · ระบุสำเนียงของแต่ละคลิป</span><span class="mono" id="voiceCount">0 คลิป</span></div>
+        <div class="voices" id="voiceList"><p class="empty">ยังไม่มีคลิปเสียง</p></div>
+        <div class="row">
+          <button id="playAudio" class="primary" disabled>เล่นเสียงที่เลือก</button>
+        </div>
+        <div class="filemeta" id="audioMeta">ไฟล์ทั้งหมดอยู่ในหน้านี้เท่านั้น ถ้ารีเฟรชหรือปิดหน้า ไฟล์จะหายไป</div>
+        <label for="ttsText" class="note">ข้อความให้อ่าน</label>
+        <textarea id="ttsText">สวัสดี ยินดีต้อนรับสู่สตูดิโอใบหน้าพูดได้ ลองอัปโหลดรูปของคุณ แล้วใส่เสียงในสำเนียงที่ต้องการดูนะ</textarea>
+        <div class="row">
+          <button id="speakBtn" class="primary">อ่านข้อความ</button>
+          <button id="stopBtn">หยุด</button>
+        </div>
+        <p class="note" id="voiceNote">กำลังตรวจหาเสียงภาษาไทยในเครื่อง…</p>
+      </div>
+
+      <div class="step">
+        <div class="step-head"><span class="num">3</span><div><h3>ความเป็นธรรมชาติ</h3><p>ปรับระดับการขยับให้เข้ากับใบหน้าแต่ละรูป</p></div></div>
+        <div class="sliders">
+          <div class="slider"><label for="sMouth">การอ้าปาก</label><input type="range" id="sMouth" min="0.4" max="1.8" step="0.05" value="1"><output id="oMouth">1.00×</output></div>
+          <div class="slider"><label for="sHead">การขยับศีรษะ</label><input type="range" id="sHead" min="0" max="2" step="0.05" value="1"><output id="oHead">1.00×</output></div>
+          <div class="slider"><label for="sBlink">ความถี่กะพริบตา</label><input type="range" id="sBlink" min="0.3" max="2" step="0.05" value="1"><output id="oBlink">1.00×</output></div>
+          <div class="slider"><label for="sRate">ความเร็วเสียงอ่าน</label><input type="range" id="sRate" min="0.6" max="1.4" step="0.05" value="1"><output id="oRate">1.00×</output></div>
+          <div class="slider"><label for="sPitch">ระดับเสียงอ่าน</label><input type="range" id="sPitch" min="0.5" max="1.6" step="0.05" value="1"><output id="oPitch">1.00</output></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="blueprint">
+    <div class="eyebrow">แบบระบบ</div>
+    <h2>ถ้าสร้างเป็นระบบจริงแบบ D-ID Agents</h2>
+    <p>ต้นแบบด้านบนบิดภาพนิ่งด้วย shader และอ่านจังหวะจากคลื่นเสียง ระบบที่ใช้งานจริงต้องเปลี่ยนสองส่วนเป็นโมเดล AI คือส่วนสร้างใบหน้า ซึ่งต้องสร้างฟัน ลิ้น และริ้วรอยใหม่ทุกเฟรม และส่วนโคลนเสียงจากคลิปตัวอย่าง ส่วนอื่นต่อกันเป็นสายพานเดียว</p>
+
+    <div class="diagram">
+<pre class="mermaid">
+flowchart LR
+  subgraph Enroll["ลงทะเบียน (ครั้งเดียวต่อเอเจนต์)"]
+    P["รูปถ่าย"] --> FD["ตรวจใบหน้า<br/>+ จุดสำคัญ 478 จุด"]
+    V["คลิปเสียง 10–60 วินาที<br/>ในสำเนียงที่ต้องการ"] --> DN["ลดเสียงรบกวน<br/>+ ตัดช่วงเงียบ"] --> SE["โปรไฟล์เสียง<br/>(คลิปอ้างอิง + ข้อความถอด)"]
+  end
+  subgraph Talk["ทุกครั้งที่คุย (สตรีม)"]
+    U["ผู้ใช้พูด / พิมพ์"] --> STT["แปลงเสียงเป็นข้อความ"] --> LLM["LLM + ฐานความรู้ (RAG)"] --> TTS["TTS ด้วยเสียงโคลน"] --> A2F["โมเดลขยับใบหน้าตามเสียง"] --> RTC["WebRTC"] --> B["เบราว์เซอร์ / แอป"]
+  end
+  FD --> A2F
+  SE --> TTS
+</pre>
+    </div>
+
+    <div class="cols">
+      <div class="block">
+        <h3>เลือกโมเดลแต่ละส่วน</h3>
+        <div class="tablewrap"><table>
+          <thead><tr><th>งาน</th><th>โอเพนซอร์ส (รันบน GPU เอง)</th><th>บริการสำเร็จรูป</th></tr></thead>
+          <tbody>
+            <tr><td>หาจุดใบหน้า</td><td>MediaPipe Face Landmarker, InsightFace</td><td>–</td></tr>
+            <tr><td>โคลนเสียง + สำเนียง</td><td>F5-TTS (มีรุ่นที่ชุมชนเทรนภาษาไทย), OpenVoice V2</td><td>ElevenLabs, Azure Custom Voice (ตรวจสอบว่ารองรับ th-TH ในรุ่นที่ใช้)</td></tr>
+            <tr><td>ใบหน้าคุณภาพสูง (ไม่เรียลไทม์)</td><td>Hallo2 / Hallo3, EchoMimic, SadTalker</td><td>D-ID, HeyGen API</td></tr>
+            <tr><td>ใบหน้าเรียลไทม์</td><td>MuseTalk, LivePortrait + โมเดลเสียงเป็นท่าทาง, Ditto</td><td>D-ID Agents, Tavus</td></tr>
+            <tr><td>แปลงเสียงเป็นข้อความ</td><td>Whisper large-v3 (faster-whisper)</td><td>Google / Azure STT</td></tr>
+            <tr><td>สมอง</td><td>–</td><td>Claude Sonnet 5.5 + pgvector สำหรับฐานความรู้</td></tr>
+            <tr><td>สตรีมภาพและเสียง</td><td>LiveKit, mediasoup</td><td>LiveKit Cloud</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div class="block">
+        <h3>งบเวลาตอบกลับ (เป้าหมายคร่าวๆ)</h3>
+        <div class="tablewrap"><table>
+          <thead><tr><th>ขั้น</th><th>เวลา</th></tr></thead>
+          <tbody>
+            <tr><td>ตรวจว่าผู้ใช้พูดจบ + ถอดเสียง</td><td class="num-cell">200–400 ms</td></tr>
+            <tr><td>LLM ส่งคำแรก</td><td class="num-cell">300–700 ms</td></tr>
+            <tr><td>TTS ส่งเสียงก้อนแรก</td><td class="num-cell">150–300 ms</td></tr>
+            <tr><td>ใบหน้าเฟรมแรก</td><td class="num-cell">100–250 ms</td></tr>
+            <tr><td>เครือข่าย</td><td class="num-cell">50–100 ms</td></tr>
+            <tr><td><b>รวมจนเห็นอวาตาร์เริ่มพูด</b></td><td class="num-cell"><b>≈ 0.8–1.7 s</b></td></tr>
+          </tbody>
+        </table></div>
+        <p class="note">ทุกขั้นต้องสตรีมต่อกัน ไม่รอให้ขั้นก่อนหน้าเสร็จทั้งประโยค จึงจะได้เวลาระดับนี้</p>
+      </div>
+    </div>
+
+    <div class="cols">
+      <div class="block">
+        <h3>เรื่องสำเนียง</h3>
+        <div class="callout">
+          <p>TTS แบบ zero-shot ลอกน้ำเสียงและจังหวะการพูดจากคลิปอ้างอิงได้ส่วนใหญ่ ถ้าอยากได้สำเนียงอีสาน เหนือ หรือใต้ ให้อัดคลิปอ้างอิงด้วยสำเนียงนั้นโดยตรง คลิปควรยาว 10–30 วินาที อัดในห้องเงียบ และมีข้อความถอดเสียงตรงกับคลิป</p>
+          <p>ถ้าต้องการสำเนียงที่ชัดและนิ่งกว่านี้ ให้ fine-tune โมเดลด้วยข้อมูลสำเนียงนั้น 30–60 นาทีขึ้นไป เพราะสำเนียงไทยถิ่นมีทั้งวรรณยุกต์และคำศัพท์ที่ต่างจากภาษากลาง ตัวลอกเสียงอย่างเดียวจึงคุมได้ไม่หมด</p>
+        </div>
+      </div>
+      <div class="block">
+        <h3>ความยินยอมและความปลอดภัย</h3>
+        <ul class="tight">
+          <li>ให้เจ้าของใบหน้าและเสียงยืนยันตัวตน เช่น อ่านประโยคยินยอมที่ระบบสุ่มให้ตอนลงทะเบียนเสียง</li>
+          <li>ฝังลายน้ำในวิดีโอและเสียงที่สร้าง และติดป้ายว่าเป็น AI</li>
+          <li>บล็อกรูปบุคคลสาธารณะ และเก็บบันทึกการใช้งานไว้ตรวจย้อนหลัง</li>
+          <li>เก็บรูปและเสียงต้นฉบับแบบเข้ารหัส และให้เจ้าของลบได้ (PDPA)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="block">
+      <h3>ต้นแบบนี้ เทียบกับระบบจริง</h3>
+      <div class="tablewrap"><table>
+        <thead><tr><th>ส่วน</th><th>หน้านี้ทำอย่างไร</th><th>ระบบจริงทำอย่างไร</th></tr></thead>
+        <tbody>
+          <tr><td>จุดใบหน้า</td><td>ลากเอง 3 จุด (หรือใช้ FaceDetector ถ้าเบราว์เซอร์มี)</td><td>MediaPipe หาให้อัตโนมัติ 478 จุด</td></tr>
+          <tr><td>การขยับ</td><td>บิดภาพด้วย WebGL ทำขากรรไกร ริมฝีปาก เปลือกตา คิ้ว และศีรษะ</td><td>โมเดล neural วาดเฟรมใหม่ทั้งหมด รวมฟัน ลิ้น ริ้วรอย และแสงเงา</td></tr>
+          <tr><td>ลิปซิงก์</td><td>วัดความดังและพลังงานย่านความถี่ formant เพื่อแยกปากอา / อี / อู / ปิด</td><td>โมเดลแปลงเสียงเป็นท่าทาง หรือใช้เวลาของหน่วยเสียงจาก TTS</td></tr>
+          <tr><td>เสียง</td><td>เล่นไฟล์ที่อัปโหลดตรงๆ หรือใช้เสียงสังเคราะห์ของเครื่อง</td><td>TTS โคลนเสียงจากคลิปอ้างอิง พูดข้อความใดก็ได้ในสำเนียงนั้น</td></tr>
+          <tr><td>การส่งภาพ</td><td>เรนเดอร์ในเครื่อง 60 fps</td><td>เรนเดอร์บน GPU แล้วสตรีมผ่าน WebRTC 25–30 fps</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const reduceMotion=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+const stage=$('stage'), wrap=$('stageWrap'), canvas=$('face');
+const gl=canvas.getContext('webgl',{antialias:false,premultipliedAlpha:false});
+if(!gl){$('noGL').hidden=false;return;}
+
+/* ---------- Shaders ---------- */
+const VS=`attribute vec2 aPos;varying vec2 vUv;
+void main(){vUv=vec2(aPos.x*0.5+0.5,0.5-aPos.y*0.5);gl_Position=vec4(aPos,0.0,1.0);}`;
+const FS=`precision highp float;
+varying vec2 vUv;
+uniform sampler2D uTex;
+uniform float uAspect,uRot,uScale,uJaw,uWide,uBlink,uBrow,uPx;
+uniform vec2 uEyeL,uEyeR,uMouth,uOff;
+vec3 tex(vec2 p){return texture2D(uTex,clamp(vec2(p.x/uAspect,p.y),vec2(0.001),vec2(0.999))).rgb;}
+vec3 blink(vec3 col,vec2 q,vec2 e,float b,float ed){
+  if(b<0.01)return col;
+  float ew=0.21*ed, eh=0.085*ed;
+  vec2 de=q-e;
+  float n=(de.x*de.x)/(ew*ew)+(de.y*de.y)/(eh*eh*1.6);
+  float m=1.0-smoothstep(0.75,1.2,n);
+  float lidY=-eh*1.1+2.2*eh*b;
+  float above=1.0-smoothstep(lidY-uPx,lidY+uPx,de.y);
+  vec3 lid=tex(vec2(q.x,q.y-2.4*eh*b));
+  float lash=exp(-pow((de.y-lidY)/(0.018*ed),2.0))*b*m;
+  vec3 r=mix(col,lid,above*m);
+  return r*(1.0-0.45*lash);
+}
+void main(){
+  vec2 p=vec2(vUv.x*uAspect,vUv.y);
+  vec2 eyeMid=0.5*(uEyeL+uEyeR);
+  float ed=max(distance(uEyeL,uEyeR),0.02);
+  /* head: rotate/translate/scale around the neck, weighted to the face so the background stays put */
+  vec2 c=mix(eyeMid,uMouth,0.45);
+  vec2 pivot=uMouth+(uMouth-eyeMid)*1.4;
+  vec2 dc=p-c; dc.y/=1.35;
+  float w=1.0-smoothstep(1.25*ed,2.6*ed,length(dc));
+  float a=-uRot*w;
+  vec2 r=p-pivot-uOff*w;
+  r=vec2(cos(a)*r.x-sin(a)*r.y,sin(a)*r.x+cos(a)*r.y);
+  r/=mix(1.0,uScale,w);
+  vec2 q=pivot+r;
+  /* brows lift */
+  vec2 b1=q-(uEyeL+vec2(0.0,-0.32*ed)); vec2 b2=q-(uEyeR+vec2(0.0,-0.32*ed));
+  float bw=exp(-(b1.x*b1.x)/(0.09*ed*ed)-(b1.y*b1.y)/(0.04*ed*ed))+exp(-(b2.x*b2.x)/(0.09*ed*ed)-(b2.y*b2.y)/(0.04*ed*ed));
+  q.y+=uBrow*0.05*ed*bw;
+  /* mouth width: wide (อี) or rounded (อู) */
+  vec2 d=q-uMouth;
+  float kx=1.0+uWide*0.16;
+  float wg=exp(-(d.x*d.x)/(0.5*ed*ed)-(d.y*d.y)/(0.12*ed*ed));
+  q.x=uMouth.x+d.x/mix(1.0,kx,wg);
+  d=q-uMouth;
+  /* jaw drop + lip opening */
+  float mw=0.40*ed*kx;
+  float pf=sqrt(max(0.0,1.0-(d.x*d.x)/(mw*mw)));
+  float J=uJaw*0.20*ed, U=uJaw*0.035*ed;
+  float top=-U*pf, bot=J*pf;
+  float jwH=1.0-smoothstep(0.55*ed,1.25*ed,abs(d.x));
+  vec2 s=q; float inside=0.0;
+  if(d.y>bot){
+    float t=smoothstep(0.0,0.3*ed,d.y-bot);
+    float D=J*mix(pf,jwH,t);
+    float jv=1.0-smoothstep(0.9*ed,1.7*ed,d.y);
+    s.y=q.y-D*jv;
+  }else if(d.y<top){
+    float uw=1.0-smoothstep(0.0,0.3*ed,top-d.y);
+    s.y=q.y+U*pf*uw;
+  }else{inside=1.0;}
+  vec3 col=tex(s);
+  col=blink(col,q,uEyeL,uBlink,ed);
+  col=blink(col,q,uEyeR,uBlink,ed);
+  if(inside>0.5){
+    float h=max(bot-top,1e-5);
+    float yy=(d.y-top)/h;
+    vec3 inner=mix(vec3(0.15,0.045,0.05),vec3(0.30,0.09,0.09),smoothstep(0.3,1.0,yy))*(0.55+0.45*pf);
+    float tongue=smoothstep(0.62,0.95,yy)*smoothstep(0.03*ed,0.08*ed,h);
+    inner=mix(inner,vec3(0.52,0.20,0.20)*(0.6+0.4*pf),tongue*0.8);
+    float teethH=min(0.045*ed,h*0.42);
+    float teeth=(1.0-smoothstep(teethH-uPx,teethH+uPx,d.y-top))*(1.0-smoothstep(mw*0.62,mw*0.8,abs(d.x)));
+    inner=mix(inner,vec3(0.88,0.86,0.82)*(0.72+0.28*pf),teeth*smoothstep(0.012*ed,0.03*ed,h));
+    float e=min(d.y-top,bot-d.y);
+    col=mix(col,inner,smoothstep(0.0,uPx*1.5,e));
+  }
+  gl_FragColor=vec4(col,1.0);
+}`;
+function sh(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s;}
+const prog=gl.createProgram();
+gl.attachShader(prog,sh(gl.VERTEX_SHADER,VS));gl.attachShader(prog,sh(gl.FRAGMENT_SHADER,FS));gl.linkProgram(prog);
+if(!gl.getProgramParameter(prog,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(prog));
+gl.useProgram(prog);
+const vb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,vb);
+gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+const aPos=gl.getAttribLocation(prog,'aPos');gl.enableVertexAttribArray(aPos);gl.vertexAttribPointer(aPos,2,gl.FLOAT,false,0,0);
+const U={};['uTex','uAspect','uRot','uScale','uJaw','uWide','uBlink','uBrow','uPx','uEyeL','uEyeR','uMouth','uOff'].forEach(n=>U[n]=gl.getUniformLocation(prog,n));
+const texture=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,texture);
+gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
+gl.uniform1i(U.uTex,0);
+
+let aspect=0.8;
+let lm={eyeL:[0.41,0.45],eyeR:[0.59,0.45],mouth:[0.5,0.59]};
+function setTexture(src){
+  gl.bindTexture(gl.TEXTURE_2D,texture);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,src);
+  aspect=src.width/src.height;
+  wrap.style.setProperty('--ar',aspect.toFixed(4));
+  fit();
+}
+
+/* ---------- Demo portrait (painted procedurally so the page works before any upload) ---------- */
+function paintDemo(){
+  const W=640,H=800,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+  let gr=g.createRadialGradient(320,300,60,320,380,560);gr.addColorStop(0,'#5E7F86');gr.addColorStop(1,'#1F3237');g.fillStyle=gr;g.fillRect(0,0,W,H);
+  // shoulders
+  g.fillStyle='#2C3F57';g.beginPath();g.ellipse(320,860,300,230,0,0,Math.PI*2);g.fill();
+  g.fillStyle='#E9E4DA';g.beginPath();g.moveTo(270,650);g.lineTo(320,720);g.lineTo(370,650);g.closePath();g.fill();
+  // neck
+  gr=g.createLinearGradient(260,0,380,0);gr.addColorStop(0,'#B97C5C');gr.addColorStop(.5,'#D89A76');gr.addColorStop(1,'#B97C5C');
+  g.fillStyle=gr;g.beginPath();g.moveTo(268,520);g.lineTo(372,520);g.lineTo(382,672);g.quadraticCurveTo(320,700,258,672);g.closePath();g.fill();
+  g.fillStyle='rgba(90,45,30,.25)';g.beginPath();g.ellipse(320,560,60,26,0,0,Math.PI*2);g.fill();
+  // hair back
+  g.fillStyle='#231915';g.beginPath();g.ellipse(320,330,182,200,0,0,Math.PI*2);g.fill();
+  g.beginPath();g.moveTo(140,330);g.quadraticCurveTo(130,520,190,590);g.lineTo(450,590);g.quadraticCurveTo(510,520,500,330);g.closePath();g.fill();
+  // ears
+  g.fillStyle='#C98A66';g.beginPath();g.ellipse(170,395,22,38,0,0,Math.PI*2);g.fill();g.beginPath();g.ellipse(470,395,22,38,0,0,Math.PI*2);g.fill();
+  // face
+  gr=g.createRadialGradient(300,360,30,320,400,230);gr.addColorStop(0,'#F0C3A2');gr.addColorStop(.7,'#DDA07C');gr.addColorStop(1,'#BF8160');
+  g.fillStyle=gr;g.beginPath();g.moveTo(170,330);g.bezierCurveTo(170,190,470,190,470,330);g.bezierCurveTo(472,450,420,560,320,575);g.bezierCurveTo(220,560,168,450,170,330);g.fill();
+  // cheeks
+  for(const x of [235,405]){const cg=g.createRadialGradient(x,445,4,x,445,60);cg.addColorStop(0,'rgba(214,110,100,.28)');cg.addColorStop(1,'rgba(214,110,100,0)');g.fillStyle=cg;g.beginPath();g.arc(x,445,60,0,Math.PI*2);g.fill();}
+  // fringe
+  g.fillStyle='#2A1E19';g.beginPath();g.moveTo(160,330);g.bezierCurveTo(165,170,475,160,482,320);g.bezierCurveTo(440,250,380,240,330,262);g.bezierCurveTo(280,232,215,250,160,330);g.fill();
+  // brows
+  g.strokeStyle='#2C1F19';g.lineCap='round';g.lineWidth=9;
+  g.beginPath();g.moveTo(225,322);g.quadraticCurveTo(255,306,292,318);g.stroke();
+  g.beginPath();g.moveTo(348,318);g.quadraticCurveTo(385,306,415,322);g.stroke();
+  // eyes
+  for(const x of [262,378]){
+    g.fillStyle='rgba(120,70,50,.18)';g.beginPath();g.ellipse(x,352,34,16,0,Math.PI,0);g.fill();
+    g.fillStyle='#F4EFEA';g.beginPath();g.ellipse(x,360,27,12.5,0,0,Math.PI*2);g.fill();
+    g.save();g.beginPath();g.ellipse(x,360,27,12.5,0,0,Math.PI*2);g.clip();
+    g.fillStyle='#4B2F1F';g.beginPath();g.arc(x,360,11.5,0,Math.PI*2);g.fill();
+    g.fillStyle='#120B08';g.beginPath();g.arc(x,360,5.2,0,Math.PI*2);g.fill();
+    g.fillStyle='rgba(255,255,255,.9)';g.beginPath();g.arc(x+4,356,2.6,0,Math.PI*2);g.fill();
+    g.fillStyle='rgba(60,30,20,.25)';g.fillRect(x-30,346,60,5);
+    g.restore();
+    g.strokeStyle='#2B1C16';g.lineWidth=3;g.beginPath();g.ellipse(x,360,27,12.5,0,Math.PI*1.02,Math.PI*1.98);g.stroke();
+    g.strokeStyle='rgba(110,60,45,.35)';g.lineWidth=1.6;g.beginPath();g.ellipse(x,361,26,12,0,Math.PI*0.1,Math.PI*0.9);g.stroke();
+  }
+  // nose
+  g.strokeStyle='rgba(130,70,50,.45)';g.lineWidth=3;g.beginPath();g.moveTo(312,370);g.quadraticCurveTo(306,410,300,428);g.stroke();
+  g.fillStyle='rgba(110,55,40,.45)';g.beginPath();g.ellipse(304,432,6,3.5,0.3,0,Math.PI*2);g.fill();g.beginPath();g.ellipse(336,432,6,3.5,-0.3,0,Math.PI*2);g.fill();
+  g.strokeStyle='rgba(130,70,50,.3)';g.lineWidth=2.5;g.beginPath();g.moveTo(296,434);g.quadraticCurveTo(320,446,344,434);g.stroke();
+  // lips (mouth seam at y=470)
+  g.fillStyle='#B45F57';
+  g.beginPath();g.moveTo(272,470);g.bezierCurveTo(290,455,305,452,320,460);g.bezierCurveTo(335,452,350,455,368,470);g.closePath();g.fill();
+  g.fillStyle='#C26C62';g.beginPath();g.moveTo(272,470);g.bezierCurveTo(295,494,345,494,368,470);g.closePath();g.fill();
+  g.fillStyle='rgba(255,255,255,.18)';g.beginPath();g.ellipse(322,481,16,4,0,0,Math.PI*2);g.fill();
+  g.strokeStyle='#6E2E2A';g.lineWidth=2.2;g.beginPath();g.moveTo(270,470);g.quadraticCurveTo(320,476,370,470);g.stroke();
+  // chin shade
+  g.fillStyle='rgba(120,60,40,.12)';g.beginPath();g.ellipse(320,540,52,16,0,0,Math.PI*2);g.fill();
+  return c;
+}
+const DEMO_LM={eyeL:[262/640,360/800],eyeR:[378/640,360/800],mouth:[320/640,470/800]};
+function useDemo(){const c=paintDemo();photos.push({id:0,name:'ภาพตัวอย่าง',canvas:c,thumb:makeThumb(c),lm:JSON.parse(JSON.stringify(DEMO_LM)),demo:true});activatePhoto(photos[0]);}
+
+/* ---------- Sizing ---------- */
+function fit(){const r=wrap.getBoundingClientRect();const dpr=Math.min(window.devicePixelRatio||1,2);
+  canvas.width=Math.max(2,Math.round(r.width*dpr));canvas.height=Math.max(2,Math.round(r.height*dpr));gl.viewport(0,0,canvas.width,canvas.height);}
+if('ResizeObserver' in window)new ResizeObserver(fit).observe(wrap);else window.addEventListener('resize',fit);
+
+/* ---------- Landmark pins ---------- */
+const pins=[...document.querySelectorAll('.pin')];
+function placePins(){pins.forEach(p=>{const v=lm[p.dataset.key];p.style.left=(v[0]*100)+'%';p.style.top=(v[1]*100)+'%';});}
+let editing=false;
+function setEditing(on){editing=on;stage.classList.toggle('editing',on);$('editBtn').setAttribute('aria-pressed',String(on));$('editBtn').textContent=on?'เสร็จสิ้น':'ปรับจุดใบหน้า';
+  if(on){stopAll();setStatus('edit','โหมดปรับจุด · ใบหน้าหยุดนิ่ง');}else setStatus('idle','พร้อม');}
+pins.forEach(p=>{
+  p.addEventListener('pointerdown',e=>{e.preventDefault();p.setPointerCapture(e.pointerId);p.style.cursor='grabbing';});
+  p.addEventListener('pointermove',e=>{if(!p.hasPointerCapture(e.pointerId))return;const r=wrap.getBoundingClientRect();
+    lm[p.dataset.key]=[Math.min(.99,Math.max(.01,(e.clientX-r.left)/r.width)),Math.min(.99,Math.max(.01,(e.clientY-r.top)/r.height))];placePins();});
+  p.addEventListener('pointerup',e=>{p.releasePointerCapture(e.pointerId);p.style.cursor='grab';});
+  p.addEventListener('keydown',e=>{const st=e.shiftKey?0.02:0.004;const v=lm[p.dataset.key];let h=true;
+    if(e.key==='ArrowLeft')v[0]-=st;else if(e.key==='ArrowRight')v[0]+=st;else if(e.key==='ArrowUp')v[1]-=st;else if(e.key==='ArrowDown')v[1]+=st;else h=false;
+    if(h){e.preventDefault();v[0]=Math.min(.99,Math.max(.01,v[0]));v[1]=Math.min(.99,Math.max(.01,v[1]));placePins();}});
+});
+$('editBtn').addEventListener('click',()=>setEditing(!editing));
+
+/* ---------- Photo upload (+ optional built-in FaceDetector) ---------- */
+function centroid(pts){let x=0,y=0;pts.forEach(p=>{x+=p.x;y+=p.y;});return{x:x/pts.length,y:y/pts.length};}
+const photos=[];let activePhoto=null,uid=0;
+const DEFAULT_NOTE='วางจุดให้ตรงตาดำทั้งสองข้างและกึ่งกลางร่องปาก ทุกการขยับคำนวณจาก 3 จุดนี้';
+function makeThumb(c){const s=160,t=document.createElement('canvas');t.width=s;t.height=s;const m=Math.min(c.width,c.height);
+  t.getContext('2d').drawImage(c,(c.width-m)/2,(c.height-m)*0.3,m,m,0,0,s,s);return t.toDataURL('image/jpeg',.82);}
+function renderPhotos(){const box=$('photoList');box.textContent='';
+  photos.forEach(p=>{const w=document.createElement('div');w.className='thumb-wrap';w.setAttribute('role','listitem');
+    const b=document.createElement('button');b.className='thumb';b.title=p.name;b.setAttribute('aria-pressed',String(p===activePhoto));b.setAttribute('aria-label','ใช้รูป '+p.name);
+    const im=document.createElement('img');im.src=p.thumb;im.alt='';b.appendChild(im);b.addEventListener('click',()=>{if(p!==activePhoto)activatePhoto(p);});w.appendChild(b);
+    if(!p.demo){const x=document.createElement('button');x.className='x';x.textContent='×';x.setAttribute('aria-label','ลบรูป '+p.name);x.addEventListener('click',()=>removePhoto(p));w.appendChild(x);}
+    box.appendChild(w);});
+  $('photoCount').textContent=photos.length+' รูป';}
+function activatePhoto(p,edit){activePhoto=p;setTexture(p.canvas);lm=p.lm;placePins();renderPhotos();setEditing(!!edit);
+  if(!edit){$('photoNote').textContent=DEFAULT_NOTE;$('photoNote').className='note';}}
+function removePhoto(p){const i=photos.indexOf(p);if(i<0||p.demo)return;photos.splice(i,1);if(activePhoto===p)activatePhoto(photos[Math.max(0,i-1)]);else renderPhotos();}
+async function detectLandmarks(c){let L0={eyeL:[0.41,0.42],eyeR:[0.59,0.42],mouth:[0.5,0.6]},auto=false;
+  if('FaceDetector' in window){try{const fd=new window.FaceDetector({fastMode:false,maxDetectedFaces:1});const faces=await fd.detect(c);
+    if(faces&&faces[0]){const f=faces[0],L=f.landmarks||[];const eyes=L.filter(l=>l.type==='eye');const m=L.find(l=>l.type==='mouth');
+      if(eyes.length>=2&&m){const e=eyes.map(l=>centroid(l.locations)).sort((a,b)=>a.x-b.x);const mc=centroid(m.locations);
+        L0={eyeL:[e[0].x/c.width,e[0].y/c.height],eyeR:[e[1].x/c.width,e[1].y/c.height],mouth:[mc.x/c.width,mc.y/c.height]};}
+      else{const b=f.boundingBox;L0={eyeL:[(b.x+b.width*.32)/c.width,(b.y+b.height*.4)/c.height],eyeR:[(b.x+b.width*.68)/c.width,(b.y+b.height*.4)/c.height],mouth:[(b.x+b.width*.5)/c.width,(b.y+b.height*.76)/c.height]};}
+      auto=true;}}catch(err){}}
+  return{lmk:L0,auto};}
+function addPhotoFile(file){return new Promise(resolve=>{
+  const url=URL.createObjectURL(file);const img=new Image();
+  img.onload=async()=>{
+    const sc=Math.min(1,1024/Math.max(img.naturalWidth,img.naturalHeight));const c=document.createElement('canvas');
+    c.width=Math.round(img.naturalWidth*sc);c.height=Math.round(img.naturalHeight*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);
+    const {lmk,auto}=await detectLandmarks(c);
+    const p={id:++uid,name:file.name,canvas:c,thumb:makeThumb(c),lm:lmk};photos.push(p);activatePhoto(p,true);
+    $('photoNote').textContent=auto?'เบราว์เซอร์หาจุดใบหน้าให้แล้ว ตรวจดูอีกครั้ง แล้วกด "เสร็จสิ้น"':'ลากจุดให้ตรงตาดำทั้งสองข้างและกึ่งกลางร่องปาก แล้วกด "เสร็จสิ้น"';
+    $('photoNote').className='note warn';resolve(p);
+  };
+  img.onerror=()=>{URL.revokeObjectURL(url);$('photoNote').textContent='เปิดไฟล์ '+file.name+' ไม่ได้ ลองใช้ไฟล์ JPG หรือ PNG';$('photoNote').className='note warn';resolve(null);};
+  img.src=url;});}
+async function addPhotos(files){for(const f of files){if(f.type.startsWith('image/'))await addPhotoFile(f);}}
+$('photoIn').addEventListener('change',e=>{addPhotos([...e.target.files]);e.target.value='';});
+function wireDrop(el,onFiles,cls){cls=cls||'over';
+  el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add(cls);});
+  el.addEventListener('dragleave',()=>el.classList.remove(cls));
+  el.addEventListener('drop',e=>{e.preventDefault();e.stopPropagation();el.classList.remove(cls);onFiles([...e.dataTransfer.files]);});}
+const routeFiles=fs=>{addPhotos(fs.filter(f=>f.type.startsWith('image/')));fs.filter(f=>f.type.startsWith('audio/')).forEach(addVoiceFile);};
+wireDrop($('photoDrop'),fs=>addPhotos(fs));
+wireDrop($('audioDrop'),fs=>fs.filter(f=>f.type.startsWith('audio/')).forEach(addVoiceFile));
+wireDrop(wrap,routeFiles,'drag');
+
+/* ---------- Audio: uploaded voice clip ---------- */
+const audioEl=new Audio();audioEl.preload='auto';
+let actx=null,analyser=null,tbuf=null,fbuf=null,audioURL=null;
+function ensureCtx(){if(actx){if(actx.state==='suspended')actx.resume();return true;}
+  const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return false;
+  actx=new AC();const node=actx.createMediaElementSource(audioEl);analyser=actx.createAnalyser();analyser.fftSize=1024;analyser.smoothingTimeConstant=0.45;
+  node.connect(analyser);analyser.connect(actx.destination);tbuf=new Float32Array(analyser.fftSize);fbuf=new Uint8Array(analyser.frequencyBinCount);return true;}
+const fmt=s=>isFinite(s)?(Math.floor(s/60)+':'+String(Math.round(s%60)).padStart(2,'0')):'–';
+/* voice library */
+const voices=[];let activeVoice=null,decodeCtx=null;
+const ACCENTS=['ภาษากลาง','อีสาน','เหนือ (คำเมือง)','ใต้','อังกฤษ','จีน','อื่นๆ'];
+async function addVoiceFile(f){
+  const v={id:++uid,name:f.name,url:URL.createObjectURL(f),duration:NaN,peaks:null,accent:ACCENTS[0],error:false};
+  voices.push(v);if(!activeVoice)selectVoice(v);else renderVoices();
+  try{const AC=window.AudioContext||window.webkitAudioContext;decodeCtx=decodeCtx||new AC();
+    const buf=await decodeCtx.decodeAudioData(await f.arrayBuffer());v.duration=buf.duration;
+    const ch=buf.getChannelData(0),n=90,step=Math.max(1,Math.floor(ch.length/n));v.peaks=[];
+    for(let i=0;i<n;i++){let m=0;const end=Math.min(ch.length,(i+1)*step);for(let j=i*step;j<end;j+=4){const a=Math.abs(ch[j]);if(a>m)m=a;}v.peaks.push(m);}
+    const mx=Math.max(1e-4,...v.peaks);v.peaks=v.peaks.map(x=>x/mx);
+  }catch(e){v.error=true;}
+  renderVoices();if(activeVoice===v){updateVoiceMeta();$('playAudio').disabled=v.error;}
+}
+function selectVoice(v){activeVoice=v;if(mode==='audio')stopAll();audioEl.src=v.url;$('playAudio').disabled=v.error;renderVoices();updateVoiceMeta();}
+function removeVoice(v){const i=voices.indexOf(v);if(i<0)return;voices.splice(i,1);
+  if(activeVoice===v){stopAll();activeVoice=null;audioEl.removeAttribute('src');$('playAudio').disabled=true;if(voices.length)selectVoice(voices[Math.max(0,i-1)]);}
+  URL.revokeObjectURL(v.url);renderVoices();updateVoiceMeta();}
+function updateVoiceMeta(){$('audioMeta').textContent=activeVoice?('เลือกอยู่: '+activeVoice.name+' · สำเนียง'+activeVoice.accent+(activeVoice.error?' · เปิดไฟล์นี้ไม่ได้ ลองแปลงเป็น mp3 หรือ wav':'')):'ไฟล์ทั้งหมดอยู่ในหน้านี้เท่านั้น ถ้ารีเฟรชหรือปิดหน้า ไฟล์จะหายไป';}
+function drawWave(cv,peaks,active){const r=cv.getBoundingClientRect();const dpr=Math.min(window.devicePixelRatio||1,2);cv.width=Math.max(1,Math.round(r.width*dpr));cv.height=Math.max(1,Math.round(r.height*dpr));
+  const g=cv.getContext('2d');const cs=getComputedStyle(document.documentElement);g.fillStyle=(active?cs.getPropertyValue('--accent'):cs.getPropertyValue('--muted')).trim()||'#888';
+  if(!peaks){g.fillRect(0,cv.height/2-dpr/2,cv.width,dpr);return;}
+  const bw=cv.width/peaks.length;peaks.forEach((p,i)=>{const h=Math.max(dpr,p*cv.height*.92);g.fillRect(i*bw+bw*.15,(cv.height-h)/2,Math.max(dpr,bw*.7),h);});}
+function renderVoices(){const box=$('voiceList');box.textContent='';
+  if(!voices.length){const e=document.createElement('p');e.className='empty';e.textContent='ยังไม่มีคลิปเสียง';box.appendChild(e);}
+  voices.forEach(v=>{const row=document.createElement('div');row.className='voice'+(v===activeVoice?' active':'');
+    const pb=document.createElement('button');pb.className='vplay';pb.textContent='▶';pb.disabled=v.error;pb.setAttribute('aria-label','เล่น '+v.name);
+    pb.addEventListener('click',()=>{if(v!==activeVoice)selectVoice(v);playActive();});
+    const mb=document.createElement('button');mb.className='vmeta';mb.setAttribute('aria-label','เลือก '+v.name);mb.addEventListener('click',()=>{if(v!==activeVoice)selectVoice(v);});
+    const nm=document.createElement('span');nm.className='vname';nm.textContent=v.name;
+    const cv=document.createElement('canvas');cv.className='wave';
+    const info=document.createElement('span');info.className='vinfo mono';info.textContent=v.error?'เปิดไฟล์นี้ไม่ได้':(isFinite(v.duration)?fmt(v.duration):'กำลังอ่าน…');
+    mb.append(nm,cv,info);
+    const sel=document.createElement('select');sel.setAttribute('aria-label','สำเนียงของ '+v.name);
+    ACCENTS.forEach(a=>{const o=document.createElement('option');o.value=a;o.textContent=a;sel.appendChild(o);});sel.value=v.accent;
+    sel.addEventListener('change',()=>{v.accent=sel.value;if(v===activeVoice)updateVoiceMeta();});
+    const x=document.createElement('button');x.className='x';x.textContent='×';x.setAttribute('aria-label','ลบ '+v.name);x.addEventListener('click',()=>removeVoice(v));
+    row.append(pb,mb,sel,x);box.appendChild(row);drawWave(cv,v.peaks,v===activeVoice);});
+  $('voiceCount').textContent=voices.length+' คลิป';}
+$('audioIn').addEventListener('change',e=>{[...e.target.files].forEach(addVoiceFile);e.target.value='';});
+audioEl.addEventListener('error',()=>{if(activeVoice&&audioEl.getAttribute('src')){activeVoice.error=true;$('playAudio').disabled=true;renderVoices();updateVoiceMeta();}});
+let mode='idle';
+function playActive(){if(!activeVoice||activeVoice.error)return;if(editing)setEditing(false);stopAll();if(!ensureCtx()){$('audioMeta').textContent='เบราว์เซอร์นี้ไม่รองรับ Web Audio';return;}
+  mode='audio';audioEl.currentTime=0;audioEl.play().then(()=>setStatus('speaking','กำลังพูด · '+activeVoice.name+' · สำเนียง'+activeVoice.accent)).catch(()=>{mode='idle';});}
+$('playAudio').addEventListener('click',playActive);
+audioEl.addEventListener('ended',()=>{if(mode==='audio'){mode='idle';setStatus('idle','พร้อม');}});
+function analyzeAudio(){
+  analyser.getFloatTimeDomainData(tbuf);let s=0;for(let i=0;i<tbuf.length;i++)s+=tbuf[i]*tbuf[i];const rms=Math.sqrt(s/tbuf.length);
+  analyser.getByteFrequencyData(fbuf);const hz=actx.sampleRate/analyser.fftSize;
+  const band=(a,b)=>{const i0=Math.max(1,Math.floor(a/hz)),i1=Math.min(fbuf.length-1,Math.ceil(b/hz));let m=0;for(let i=i0;i<=i1;i++)m+=fbuf[i];return m/(i1-i0+1)/255;};
+  const low=band(250,900),mid=band(1000,2600),high=band(3500,8000);
+  const db=20*Math.log10(rms+1e-7);let open=Math.min(1,Math.max(0,(db+48)/32));open=Math.pow(open,1.25);
+  if(high>low*1.1&&open<0.5)open*=0.6; // ส, ฟ, ช: teeth close, little jaw
+  const wide=open>0.06?Math.max(-1,Math.min(1,(mid-low)/(mid+low+0.02)*2.4+0.2)):0;
+  return{jaw:open,wide};
+}
+
+/* ---------- Text-to-speech (device voices) ---------- */
+let thaiVoice=null;
+function pickVoice(){if(!('speechSynthesis' in window))return null;const vs=speechSynthesis.getVoices();thaiVoice=vs.find(v=>/^th/i.test(v.lang))||null;
+  $('voiceNote').textContent=thaiVoice?('ใช้เสียงไทยของเครื่อง: '+thaiVoice.name+' · เสียงนี้ไม่ได้โคลนจากคลิปของคุณ'):(vs.length?'ไม่พบเสียงภาษาไทยในเครื่องนี้ ข้อความไทยจะแสดงเป็นการขยับปากอย่างเดียว ถ้าอยากได้ยินเสียง ให้ติดตั้งเสียงไทยใน Windows (การตั้งค่า › เวลาและภาษา › คำพูด) หรืออัปโหลดคลิปเสียงแทน':'เครื่องนี้ไม่มีเสียงสังเคราะห์ จะแสดงเฉพาะการขยับใบหน้า');
+  $('voiceNote').className=thaiVoice?'note':'note warn';return thaiVoice;}
+if('speechSynthesis' in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice;}else{$('voiceNote').textContent='เบราว์เซอร์นี้ไม่มีเสียงสังเคราะห์ จะแสดงเฉพาะการขยับใบหน้า';$('voiceNote').className='note warn';}
+let ttsOn=false,simTimer=0,startGuard=0;
+const syl={phase:0,rate:5,amp:.7,wide:0,pause:0};
+function synthMouth(dt){
+  if(syl.pause>0){syl.pause-=dt;return{jaw:0,wide:syl.wide};}
+  syl.phase+=dt*syl.rate*Math.PI;
+  if(syl.phase>=Math.PI){syl.phase-=Math.PI;syl.rate=4+Math.random()*2.5;syl.amp=.45+Math.random()*.5;syl.wide=[-.7,0,.2,.6,.8][Math.floor(Math.random()*5)];if(Math.random()<.12)syl.pause=.12+Math.random()*.2;}
+  return{jaw:Math.sin(syl.phase)*syl.amp,wide:syl.wide};
+}
+function simulate(text){mode='tts';ttsOn=true;setStatus('speaking','กำลังขยับ · ไม่มีเสียง');clearTimeout(simTimer);
+  simTimer=setTimeout(()=>{ttsOn=false;mode='idle';setStatus('idle','พร้อม');},Math.max(1500,text.length*85));}
+$('speakBtn').addEventListener('click',()=>{
+  if(editing)setEditing(false);stopAll();const text=$('ttsText').value.trim();if(!text)return;
+  const v=('speechSynthesis' in window)?(thaiVoice||pickVoice()):null;
+  /* a non-Thai voice silently skips Thai text, so animate without sound instead */
+  if(!('speechSynthesis' in window)||(!v&&/[฀-๿]/.test(text))){simulate(text);return;}
+  const u=new SpeechSynthesisUtterance(text);u.lang='th-TH';if(v)u.voice=v;
+  u.rate=+$('sRate').value;u.pitch=+$('sPitch').value;let started=false;
+  u.onstart=()=>{started=true;mode='tts';ttsOn=true;setStatus('speaking','กำลังพูด · เสียงสังเคราะห์');};
+  u.onboundary=()=>{syl.pause=0;syl.phase=0;syl.amp=.6+Math.random()*.4;};
+  u.onend=u.onerror=()=>{if(mode==='tts'&&started){ttsOn=false;mode='idle';setStatus('idle','พร้อม');}};
+  speechSynthesis.speak(u);
+  clearTimeout(startGuard);startGuard=setTimeout(()=>{if(!started){speechSynthesis.cancel();simulate(text);}},1500);
+});
+function stopAll(){try{audioEl.pause();}catch(e){}if('speechSynthesis' in window)speechSynthesis.cancel();clearTimeout(simTimer);clearTimeout(startGuard);ttsOn=false;mode='idle';if(!editing)setStatus('idle','พร้อม');}
+$('stopBtn').addEventListener('click',stopAll);
+
+/* ---------- Sliders ---------- */
+const ctl={mouth:1,head:1,blink:1};
+[['sMouth','oMouth','mouth','×'],['sHead','oHead','head','×'],['sBlink','oBlink','blink','×'],['sRate','oRate',null,'×'],['sPitch','oPitch',null,'']].forEach(([s,o,k,suf])=>{
+  const el=$(s);const upd=()=>{$(o).textContent=(+el.value).toFixed(2)+suf;if(k)ctl[k]=+el.value;};el.addEventListener('input',upd);upd();});
+
+/* ---------- Status ---------- */
+function setStatus(state,text){$('status').dataset.state=state;$('statusText').textContent=text;}
+
+/* ---------- Animation ---------- */
+const S={jaw:0,wide:0,blink:0,brow:0,energy:0,rot:0};
+let t=0,last=performance.now(),nextBlink=1.5,blinkT=-1,frameN=0;
+function scheduleBlink(){nextBlink=t+(1.8+Math.random()*4)/ctl.blink;if(Math.random()<.15)nextBlink=t+.28;}
+const noise=x=>Math.sin(x*.71)*.5+Math.sin(x*1.37+1.7)*.32+Math.sin(x*2.93+.4)*.18;
+function step(dt){
+  let tgt={jaw:0,wide:0};
+  if(!editing){
+    if(mode==='audio'&&analyser&&!audioEl.paused)tgt=analyzeAudio();
+    else if(mode==='tts'&&ttsOn)tgt=synthMouth(dt);
+  }
+  tgt.jaw=Math.min(1.25,tgt.jaw*ctl.mouth);
+  const k=r=>1-Math.exp(-r*dt);
+  S.jaw+=(tgt.jaw-S.jaw)*k(tgt.jaw>S.jaw?28:14);
+  S.wide+=(tgt.wide-S.wide)*k(10);
+  S.energy+=(S.jaw-S.energy)*k(3);
+  const bt=S.jaw>.65?1:0;S.brow+=(bt-S.brow)*k(bt>S.brow?4:1.5);
+  if(editing){S.blink=0;blinkT=-1;}
+  else{
+    if(blinkT<0&&t>=nextBlink)blinkT=0;
+    if(blinkT>=0){blinkT+=dt;const a=.07,h=.05,r=.13;
+      if(blinkT<a)S.blink=blinkT/a;else if(blinkT<a+h)S.blink=1;else if(blinkT<a+h+r)S.blink=1-(blinkT-a-h)/r;else{S.blink=0;blinkT=-1;scheduleBlink();}}
+  }
+}
+function draw(){
+  const ex=lm.eyeL,er=lm.eyeR,mo=lm.mouth;
+  const ed=Math.hypot((er[0]-ex[0])*aspect,er[1]-ex[1]);
+  const hm=editing?0:ctl.head*(reduceMotion?.35:1);
+  const rot=hm*(.028*noise(t)+.018*S.energy*Math.sin(t*2.7));
+  const ox=hm*ed*.05*noise(t*.83+3.1), oy=hm*ed*(.03*noise(t*.91+7.3)+.05*S.energy*(.5+.5*Math.sin(t*4.1)));
+  const sc=1+.006*hm*Math.sin(t*1.45);
+  S.rot=rot;
+  gl.uniform1f(U.uAspect,aspect);gl.uniform1f(U.uRot,rot);gl.uniform1f(U.uScale,sc);gl.uniform2f(U.uOff,ox,oy);
+  gl.uniform1f(U.uJaw,S.jaw);gl.uniform1f(U.uWide,S.wide);gl.uniform1f(U.uBlink,S.blink);gl.uniform1f(U.uBrow,S.brow);gl.uniform1f(U.uPx,1/canvas.height);
+  gl.uniform2f(U.uEyeL,ex[0]*aspect,ex[1]);gl.uniform2f(U.uEyeR,er[0]*aspect,er[1]);gl.uniform2f(U.uMouth,mo[0]*aspect,mo[1]);
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+}
+function meters(){
+  const j=Math.min(1,S.jaw),w=S.wide,deg=S.rot*180/Math.PI;
+  $('mJaw').style.width=(j*100)+'%';$('mJawV').textContent=j.toFixed(2);
+  $('mWide').style.width=((w+1)/2*100)+'%';$('mWideV').textContent=(w>=0?'+':'')+w.toFixed(2);
+  $('mBlink').style.width=(S.blink*100)+'%';$('mBlinkV').textContent=S.blink.toFixed(2);
+  $('mHead').style.width=Math.min(100,Math.abs(deg)/4*100)+'%';$('mHeadV').textContent=deg.toFixed(1)+'°';
+  const v=S.jaw<.12?'M · ปิด':(S.wide>.35?'I · อี':(S.wide<-.25?'U · อู':'A · อา'));$('viseme').textContent='รูปปาก: '+v;
+}
+function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;t+=dt;step(dt);draw();if((frameN++%3)===0)meters();requestAnimationFrame(frame);}
+
+useDemo();fit();requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>
