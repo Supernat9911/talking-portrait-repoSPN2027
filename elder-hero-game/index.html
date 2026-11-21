@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}body{margin:0}</style>
+</head>
+<body>
+<title>ฮีโร่จิ๋วพิทักษ์ผู้สูงวัย</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mali:wght@500;600;700&family=Sarabun:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one column "health-post" card stack, a triage traffic light as the signature, a fixed 1669 bar at the bottom */
+:root{
+  --bg:#EAF4F2; --surface:#FFFFFF; --sunk:#F4FAF9; --ink:#10302F; --muted:#4A6664; --line:#C6DCD8;
+  --teal:#0B7A72; --teal-soft:#D3EEEA; --on-teal:#FFFFFF;
+  --red:#C8102E; --red-soft:#FBE3E6; --on-red:#FFFFFF;
+  --amber:#9A5B00; --amber-fill:#F2A900; --amber-soft:#FFF0D1; --on-amber:#2A1A00;
+  --green:#2E7D32; --green-soft:#DDF2DE; --on-green:#FFFFFF;
+  --star:#E8A000;
+  --font-display:"Mali","Sarabun",system-ui,sans-serif;
+  --font-body:"Sarabun",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --radius:18px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0C1B1A; --surface:#142928; --sunk:#10201F; --ink:#E3F2EF; --muted:#9DB9B5; --line:#2A4644;
+  --teal:#4FC7BC; --teal-soft:#173B39; --on-teal:#05201E;
+  --red:#FF6B7C; --red-soft:#3B1A20; --on-red:#24060B;
+  --amber:#F5BE55; --amber-fill:#F5BE55; --amber-soft:#3A2C12; --on-amber:#241800;
+  --green:#72CF7D; --green-soft:#17331B; --on-green:#062109;
+  --star:#F7C948; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0C1B1A; --surface:#142928; --sunk:#10201F; --ink:#E3F2EF; --muted:#9DB9B5; --line:#2A4644;
+  --teal:#4FC7BC; --teal-soft:#173B39; --on-teal:#05201E;
+  --red:#FF6B7C; --red-soft:#3B1A20; --on-red:#24060B;
+  --amber:#F5BE55; --amber-fill:#F5BE55; --amber-soft:#3A2C12; --on-amber:#241800;
+  --green:#72CF7D; --green-soft:#17331B; --on-green:#062109;
+  --star:#F7C948; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:18px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:20px calc(160px + env(safe-area-inset-bottom,0px))}
+.wrap{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{font-family:var(--font-display);line-height:1.3;text-wrap:balance;margin:0}
+h1{font-size:clamp(1.9rem,6vw,2.8rem)}
+h2{font-size:clamp(1.4rem,4.5vw,1.9rem)}
+h3{font-size:1.2rem}
+p{margin:0}
+.muted{color:var(--muted)}
+.eyebrow{font-size:.85rem;font-weight:600;letter-spacing:.06em;color:var(--teal)}
+button{font:inherit;cursor:pointer;border:0;border-radius:14px}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--teal);outline-offset:3px}
+.btn{background:var(--teal);color:var(--on-teal);padding:12px 22px;font-weight:700;font-size:1.05rem;min-height:52px}
+.btn.ghost{background:transparent;color:var(--teal);border:2px solid var(--teal)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:22px;display:flex;flex-direction:column;gap:14px}
+
+/* hero */
+.hero{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;padding-block:8px}
+.hero > div:first-child{min-width:0;display:flex;flex-direction:column;gap:10px}
+.light{background:var(--ink);border-radius:40px;padding:14px 12px;display:flex;flex-direction:column;gap:10px}
+.light span{width:46px;height:46px;border-radius:50%;display:block;opacity:.35}
+.light .r{background:var(--red)} .light .y{background:var(--amber-fill)} .light .g{background:var(--green)}
+.light span.on{opacity:1;box-shadow:0 0 18px currentColor}
+.light .r.on{color:var(--red)} .light .y.on{color:var(--amber-fill)} .light .g.on{color:var(--green)}
+.score-strip{display:flex;gap:8px;align-items:center;font-weight:600}
+.stars{color:var(--star);letter-spacing:2px;font-size:1.2rem}
+
+/* mission cards */
+.missions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.mission{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;text-align:left;color:var(--ink);
+  display:flex;flex-direction:column;gap:6px;transition:transform .15s,border-color .15s}
+.mission:hover{transform:translateY(-2px);border-color:var(--teal)}
+.mission .num{font-family:var(--font-display);font-size:.9rem;color:var(--teal);font-weight:700}
+.mission h3{font-size:1.15rem}
+.mission p{font-size:.95rem;color:var(--muted)}
+.mission .stars{font-size:1rem}
+
+/* knowledge */
+.conds{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.cond{border-radius:var(--radius);padding:18px;background:var(--sunk);border:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.cond h3{color:var(--teal)}
+.cond ul{margin:0;padding-left:1.2em;font-size:.95rem}
+.cond .do{font-size:.95rem;border-top:1px dashed var(--line);padding-top:8px}
+
+/* triage */
+.progress{height:10px;background:var(--teal-soft);border-radius:10px;overflow:hidden}
+.progress i{display:block;height:100%;background:var(--teal);transition:width .3s}
+.tag{display:inline-block;font-size:.85rem;font-weight:700;padding:3px 12px;border-radius:999px;background:var(--teal-soft);color:var(--teal)}
+.scene{font-size:1.3rem;font-weight:600;line-height:1.55}
+.choices{display:grid;gap:10px}
+.choice{display:flex;align-items:center;gap:14px;text-align:left;padding:14px 16px;min-height:64px;font-weight:700;font-size:1.05rem;border:3px solid transparent}
+.choice .dot{width:30px;height:30px;border-radius:50%;flex:none}
+.choice.red{background:var(--red-soft);color:var(--red)} .choice.red .dot{background:var(--red)}
+.choice.yellow{background:var(--amber-soft);color:var(--amber)} .choice.yellow .dot{background:var(--amber-fill)}
+.choice.green{background:var(--green-soft);color:var(--green)} .choice.green .dot{background:var(--green)}
+.choice small{display:block;font-weight:500;font-size:.88rem;color:var(--ink);opacity:.85}
+.choice.picked{border-color:currentColor}
+.choice.dim{opacity:.4}
+.feedback{border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:6px}
+.feedback.ok{background:var(--green-soft)} .feedback.no{background:var(--red-soft)}
+.feedback b{font-family:var(--font-display);font-size:1.15rem}
+.speak{background:var(--teal-soft);color:var(--teal);padding:8px 14px;font-weight:600;font-size:.95rem}
+
+/* be fast */
+.fast{display:grid;gap:12px}
+.fitem{display:grid;grid-template-columns:56px 1fr;gap:14px;align-items:start;background:var(--sunk);border:1px solid var(--line);border-radius:14px;padding:14px}
+.fitem .letter{width:56px;height:56px;border-radius:14px;background:var(--teal);color:var(--on-teal);display:grid;place-items:center;font-family:var(--font-display);font-size:1.8rem;font-weight:700}
+.fitem > div{min-width:0;display:flex;flex-direction:column;gap:6px}
+.toggle{display:flex;gap:8px;flex-wrap:wrap}
+.toggle button{padding:8px 16px;font-weight:700;background:var(--surface);border:2px solid var(--line);color:var(--ink)}
+.toggle button.sel-ok{background:var(--green);border-color:var(--green);color:var(--on-green)}
+.toggle button.sel-bad{background:var(--red);border-color:var(--red);color:var(--on-red)}
+.alarm{background:var(--red);color:var(--on-red);border-radius:var(--radius);padding:22px;display:flex;flex-direction:column;gap:10px}
+.alarm h2{font-size:clamp(1.6rem,6vw,2.3rem)}
+.alarm ol{margin:0;padding-left:1.3em}
+.alarm .big{font-family:var(--font-display);font-size:clamp(2.6rem,12vw,4rem);font-weight:700;line-height:1}
+.calm{background:var(--green-soft);border-radius:var(--radius);padding:20px;display:flex;flex-direction:column;gap:8px}
+
+/* memory */
+.board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;max-width:520px;width:100%;margin:0 auto}
+.card{aspect-ratio:1;max-width:100%;border-radius:14px;font-size:clamp(1.8rem,8vw,2.8rem);background:var(--teal);color:var(--on-teal);display:grid;place-items:center;transition:transform .2s}
+.card.face{background:var(--surface);border:2px solid var(--teal);color:var(--ink)}
+.card.done{background:var(--green-soft);border:2px solid var(--green)}
+.card .q{font-family:var(--font-display);font-size:1.6rem}
+.stat{display:flex;gap:18px;flex-wrap:wrap;font-weight:600;font-variant-numeric:tabular-nums}
+
+/* chair */
+.timer{font-family:var(--font-display);font-size:clamp(3rem,16vw,5.5rem);font-weight:700;text-align:center;font-variant-numeric:tabular-nums;line-height:1}
+.reps{display:flex;justify-content:center;gap:10px}
+.reps i{width:34px;height:34px;border-radius:50%;border:3px solid var(--teal);display:block}
+.reps i.on{background:var(--teal)}
+.tap{width:100%;min-height:96px;font-size:1.4rem;font-family:var(--font-display);font-weight:700;background:var(--teal);color:var(--on-teal)}
+.note{background:var(--amber-soft);border-radius:14px;padding:14px 16px;font-size:.95rem}
+.result{border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:6px}
+.result.good{background:var(--green-soft)} .result.warn{background:var(--amber-soft)}
+
+/* certificate */
+.cert{border:4px double var(--teal);border-radius:var(--radius);padding:28px 20px;text-align:center;background:var(--surface);display:flex;flex-direction:column;gap:10px;align-items:center}
+.cert .name{font-family:var(--font-display);font-size:clamp(1.8rem,7vw,2.6rem);color:var(--teal);font-weight:700;word-break:break-word}
+.cert .stars{font-size:2rem}
+input[type=text]{font:inherit;padding:12px 14px;border-radius:12px;border:2px solid var(--line);background:var(--surface);color:var(--ink);width:100%;max-width:340px}
+
+/* sos bar */
+.sos{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--red);color:var(--on-red);
+  padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.sos .in{max-width:860px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between}
+.sos .num{font-family:var(--font-display);font-size:1.7rem;font-weight:700;letter-spacing:.04em;user-select:all}
+.sos .lbl{font-size:.9rem;line-height:1.3}
+.sos a,.sos button{background:var(--on-red);color:var(--red);font-weight:700;padding:8px 14px;border-radius:12px;text-decoration:none;font-size:.95rem}
+.back{align-self:flex-start;background:transparent;color:var(--teal);font-weight:700;padding:6px 0}
+.disclaimer{font-size:.88rem;color:var(--muted);text-align:center}
+
+@media (max-width:620px){
+  .hero{grid-template-columns:1fr}
+  .light{flex-direction:row;justify-self:start;padding:10px 14px}
+  .light span{width:36px;height:36px}
+  .missions,.conds{grid-template-columns:1fr}
+  body{font-size:17px}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+
+<!-- ================= HOME ================= -->
+<section id="v-home" class="wrap">
+  <header class="hero">
+    <div>
+      <span class="eyebrow">โครงงานเกมเพื่อสุขภาพ · ป.5</span>
+      <h1>ฮีโร่จิ๋วพิทักษ์ผู้สูงวัย</h1>
+      <p>เกมฝึกให้เด็ก ๆ รู้ว่าเมื่อไรคุณตาคุณยาย <b>ฉุกเฉิน</b> ต้องรีบขอความช่วยเหลือ เมื่อไรควรพาไปหาหมอ และดูแลอย่างไรให้แข็งแรง สำหรับผู้สูงอายุที่มีภาวะหลอดเลือดสมองตีบ กระดูกพรุน กล้ามเนื้อน้อย และอัลไซเมอร์</p>
+      <div class="score-strip"><span>ดาวของฉัน</span><span class="stars" id="totalStars">☆☆☆</span><span class="muted" id="totalText">0 / 12</span></div>
+    </div>
+    <div class="light" aria-hidden="true"><span class="r on" id="L1"></span><span class="y" id="L2"></span><span class="g" id="L3"></span></div>
+  </header>
+
+  <h2>เลือกภารกิจ</h2>
+  <div class="missions">
+    <button class="mission" data-go="triage"><span class="num">ภารกิจ 1</span><h3>ไฟจราจรความฉุกเฉิน</h3><p>อ่านเหตุการณ์ แล้วแยกว่าเป็นไฟแดง เหลือง หรือเขียว</p><span class="stars" data-stars="triage">☆☆☆</span></button>
+    <button class="mission" data-go="befast"><span class="num">ภารกิจ 2</span><h3>เช็กด่วน BE FAST</h3><p>ตรวจ 5 สัญญาณหลอดเลือดสมองตีบ ใช้ได้จริงที่บ้าน</p><span class="stars" data-stars="befast">☆☆☆</span></button>
+    <button class="mission" data-go="memory"><span class="num">ภารกิจ 3</span><h3>เกมจับคู่ฝึกความจำ</h3><p>ชวนคุณตาคุณยายเล่นด้วยกัน ช่วยฝึกสมอง</p><span class="stars" data-stars="memory">☆☆☆</span></button>
+    <button class="mission" data-go="chair"><span class="num">ภารกิจ 4</span><h3>ทดสอบลุกนั่ง 5 ครั้ง</h3><p>จับเวลาเช็กกำลังกล้ามเนื้อขาและความเสี่ยงหกล้ม</p><span class="stars" data-stars="chair">☆☆☆</span></button>
+  </div>
+  <div class="row"><button class="btn ghost" data-go="cert">รับเกียรติบัตรฮีโร่จิ๋ว</button></div>
+
+  <h2>รู้จัก 4 ภาวะของผู้สูงวัย</h2>
+  <div class="conds">
+    <div class="cond"><h3>หลอดเลือดสมองตีบ</h3><p class="muted">เลือดไปเลี้ยงสมองไม่พอ สมองเสียหายเร็วมาก</p>
+      <ul><li>หน้าเบี้ยว ปากตก</li><li>แขนขาอ่อนแรงหรือชาข้างเดียว</li><li>พูดไม่ชัด เดินเซ ตามัวทันที</li></ul>
+      <p class="do"><b>ทำทันที:</b> โทร 1669 จดเวลาที่เริ่มมีอาการ ห้ามให้กินน้ำ อาหาร หรือยา</p></div>
+    <div class="cond"><h3>กระดูกพรุน</h3><p class="muted">กระดูกบางและเปราะ หกล้มนิดเดียวก็หักได้</p>
+      <ul><li>หลังค่อม ส่วนสูงลดลง</li><li>ปวดหลังบ่อย</li><li>หกล้มแล้วเจ็บสะโพก ลุกไม่ได้</li></ul>
+      <p class="do"><b>ทำทันที:</b> ถ้าล้มแล้วลุกไม่ได้ อย่าดึงให้ลุก ให้นอนนิ่ง แล้วโทร 1669</p></div>
+    <div class="cond"><h3>กล้ามเนื้อน้อย</h3><p class="muted">กล้ามเนื้อลดลงตามวัย ทำให้อ่อนแรงและหกล้มง่าย</p>
+      <ul><li>ลุกจากเก้าอี้ยาก ต้องใช้มือดัน</li><li>เดินช้าลง ถือของหนักไม่ไหว</li><li>หกล้มบ่อย</li></ul>
+      <p class="do"><b>ดูแล:</b> กินโปรตีน เช่น ไข่ ปลา นม เต้าหู้ และออกกำลังกายทุกวัน</p></div>
+    <div class="cond"><h3>อัลไซเมอร์</h3><p class="muted">สมองเสื่อม ความจำและการคิดค่อย ๆ แย่ลง</p>
+      <ul><li>ถามเรื่องเดิมซ้ำ ลืมเรื่องที่เพิ่งเกิด</li><li>หลงทาง จำบ้านตัวเองไม่ได้</li><li>ลืมปิดแก๊ส ลืมกินยา</li></ul>
+      <p class="do"><b>ถ้าหายจากบ้าน:</b> แจ้งตำรวจ 191 ทันที ควรติดป้ายชื่อและเบอร์โทรไว้กับตัวคุณตาคุณยาย</p></div>
+  </div>
+  <p class="disclaimer">เกมนี้ใช้เพื่อการเรียนรู้และคัดกรองเบื้องต้นเท่านั้น ไม่ใช่การวินิจฉัยโรค ถ้าสงสัยให้ปรึกษาแพทย์หรือ อสม.</p>
+</section>
+
+<!-- ================= TRIAGE ================= -->
+<section id="v-triage" class="wrap" hidden>
+  <button class="back" data-go="home">← กลับหน้าหลัก</button>
+  <div class="panel" id="triageBox"></div>
+</section>
+
+<!-- ================= BE FAST ================= -->
+<section id="v-befast" class="wrap" hidden>
+  <button class="back" data-go="home">← กลับหน้าหลัก</button>
+  <div class="panel">
+    <span class="eyebrow">ภารกิจ 2</span>
+    <h2>เช็กด่วน BE FAST</h2>
+    <p>ถ้าคุณตาคุณยายดูแปลกไปทันที ให้ตรวจทีละข้อ กด <b>ปกติ</b> หรือ <b>ผิดปกติ</b> ถ้าผิดปกติแม้ข้อเดียว คือฉุกเฉิน</p>
+    <div class="fast" id="fastList"></div>
+    <div class="row"><button class="btn" id="fastCheck" disabled>ดูผลการเช็ก</button><button class="btn ghost" id="fastReset">เริ่มใหม่</button></div>
+  </div>
+  <div id="fastResult"></div>
+</section>
+
+<!-- ================= MEMORY ================= -->
+<section id="v-memory" class="wrap" hidden>
+  <button class="back" data-go="home">← กลับหน้าหลัก</button>
+  <div class="panel">
+    <span class="eyebrow">ภารกิจ 3</span>
+    <h2>เกมจับคู่ฝึกความจำ</h2>
+    <p>เปิดการ์ดทีละ 2 ใบ หาของใช้ที่เหมือนกันให้ครบ 6 คู่ ชวนคุณตาคุณยายเล่นด้วยกันทุกวัน ช่วยให้สมองได้ทำงาน</p>
+    <div class="stat"><span>เปิดไป <span id="memMoves">0</span> รอบ</span><span>เวลา <span id="memTime">0</span> วินาที</span><span>เจอแล้ว <span id="memPairs">0</span>/6 คู่</span></div>
+    <div class="board" id="board"></div>
+    <div id="memResult"></div>
+    <div class="row"><button class="btn ghost" id="memReset">สับการ์ดใหม่</button></div>
+    <p class="disclaimer">เกมนี้ฝึกสมอง ไม่ได้ตรวจว่าเป็นอัลไซเมอร์หรือไม่ ถ้าลืมบ่อยจนกระทบชีวิตประจำวัน ควรพาไปพบแพทย์</p>
+  </div>
+</section>
+
+<!-- ================= CHAIR ================= -->
+<section id="v-chair" class="wrap" hidden>
+  <button class="back" data-go="home">← กลับหน้าหลัก</button>
+  <div class="panel">
+    <span class="eyebrow">ภารกิจ 4</span>
+    <h2>ทดสอบลุกนั่ง 5 ครั้ง</h2>
+    <p>ให้คุณตาคุณยายนั่งเก้าอี้ กอดอกไว้ แล้วลุกยืนให้สุดและนั่งลงให้เร็วที่สุด 5 ครั้ง หนูเป็นคนจับเวลาและกดนับทุกครั้งที่ท่านยืนตรง</p>
+    <div class="note"><b>ความปลอดภัยก่อน:</b> ทำต่อหน้าผู้ใหญ่ ใช้เก้าอี้มั่นคงพิงผนัง ถ้าเจ็บ เวียนหัว หรือเหนื่อย ให้หยุดทันที</div>
+    <div class="timer" id="chairTime">0.0</div>
+    <p class="muted" style="text-align:center">วินาที</p>
+    <div class="reps" id="reps"><i></i><i></i><i></i><i></i><i></i></div>
+    <button class="tap" id="chairTap">เริ่มจับเวลา</button>
+    <div class="row"><button class="btn ghost" id="chairStop" hidden>ทำไม่ครบ หยุดก่อน</button><button class="btn ghost" id="chairReset">เริ่มใหม่</button></div>
+    <div id="chairResult"></div>
+  </div>
+</section>
+
+<!-- ================= CERT ================= -->
+<section id="v-cert" class="wrap" hidden>
+  <button class="back" data-go="home">← กลับหน้าหลัก</button>
+  <div class="panel">
+    <label for="heroName"><b>พิมพ์ชื่อฮีโร่</b></label>
+    <input type="text" id="heroName" placeholder="เช่น ด.ญ.ใจดี รักยาย" maxlength="40">
+  </div>
+  <div class="cert">
+    <span class="eyebrow">เกียรติบัตร</span>
+    <h2>ฮีโร่จิ๋วพิทักษ์ผู้สูงวัย</h2>
+    <p>มอบให้</p>
+    <div class="name" id="certName">ฮีโร่จิ๋ว</div>
+    <div class="stars" id="certStars">☆☆☆</div>
+    <p id="certText">ผ่านภารกิจ 0 จาก 4 ภารกิจ</p>
+    <p class="muted">รู้วิธีเช็กความฉุกเฉิน และจำเบอร์ <b>1669</b> ได้</p>
+  </div>
+</section>
+
+</div>
+
+<div class="sos" role="region" aria-label="เบอร์ฉุกเฉิน">
+  <div class="in">
+    <div><div class="lbl">เจ็บป่วยฉุกเฉิน โทร</div><div class="num">1669</div></div>
+    <div class="lbl">คนหาย / เหตุร้าย<br><b style="font-size:1.2rem">191</b></div>
+    <div class="row" style="gap:8px"><a href="tel:1669">โทร 1669</a><button id="copySos">คัดลอกเบอร์</button></div>
+  </div>
+</div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const KEY='elder-hero-v1';
+let S={triage:0,befast:0,memory:0,chair:0,name:''};
+try{const d=JSON.parse(localStorage.getItem(KEY)||'null'); if(d) S=Object.assign(S,d);}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+const starStr=n=>'★'.repeat(n)+'☆'.repeat(3-n);
+function setStars(k,n){ if(n>S[k]) {S[k]=n; save();} refreshStars(); }
+function refreshStars(){
+  $$('[data-stars]').forEach(el=>el.textContent=starStr(S[el.dataset.stars]));
+  const t=S.triage+S.befast+S.memory+S.chair;
+  $('#totalText').textContent=t+' / 12';
+  $('#totalStars').textContent=starStr(Math.round(t/4));
+  const done=['triage','befast','memory','chair'].filter(k=>S[k]>0).length;
+  $('#certStars').textContent='★'.repeat(t)+'☆'.repeat(12-t);
+  $('#certText').textContent='ผ่านภารกิจ '+done+' จาก 4 ภารกิจ ได้ '+t+' ดาว';
+}
+
+/* sound (starts only after a tap) */
+let ac=null;
+function beep(ok){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+  const o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);
+  o.frequency.value=ok?880:220;o.type=ok?'sine':'square';g.gain.setValueAtTime(.12,ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+(ok?.25:.35));o.start();o.stop(ac.currentTime+.4);}catch(e){}}
+function speak(t){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='th-TH';u.rate=.9;speechSynthesis.speak(u);}catch(e){}}
+
+/* router */
+function go(v){$$('section[id^="v-"]').forEach(s=>s.hidden=s.id!=='v-'+v);window.scrollTo(0,0);
+  if(v==='triage')startTriage(); if(v==='memory'&&!memStarted)buildBoard(); if(v==='cert')refreshStars();}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(b)go(b.dataset.go);});
+
+/* hero light cycle */
+let li=0;const lights=['#L1','#L2','#L3'];
+if(!matchMedia('(prefers-reduced-motion: reduce)').matches)
+  setInterval(()=>{lights.forEach((s,i)=>$(s).classList.toggle('on',i===li));li=(li+1)%3;},1400);
+
+/* ===== Mission 1: triage ===== */
+const LV={red:{t:'ไฟแดง ฉุกเฉิน!',d:'ขอความช่วยเหลือทันที'},yellow:{t:'ไฟเหลือง เฝ้าระวัง',d:'บอกผู้ใหญ่ พาไปหาหมอเร็ว ๆ นี้'},green:{t:'ไฟเขียว ดูแลป้องกัน',d:'ทำได้ที่บ้านทุกวัน'}};
+const SC=[
+ {c:'หลอดเลือดสมองตีบ',lv:'red',s:'คุณตากำลังกินข้าว แล้วมุมปากข้างหนึ่งตกลงทันที พูดไม่ชัด',e:'หน้าเบี้ยวและพูดไม่ชัดทันที คือสัญญาณหลอดเลือดสมองตีบ โทร 1669 และจดเวลาที่เริ่มมีอาการ ห้ามให้กินน้ำหรือยา เพราะอาจสำลัก'},
+ {c:'หลอดเลือดสมองตีบ',lv:'red',s:'คุณยายยกแขนสองข้างค้างไว้ แต่แขนซ้ายค่อย ๆ ตกลงเอง และบอกว่าแขนชา',e:'แขนอ่อนแรงข้างเดียวคือตัว A ใน BE FAST ต้องโทร 1669 ทันที ยิ่งถึงโรงพยาบาลเร็ว สมองยิ่งเสียหายน้อย'},
+ {c:'หลอดเลือดสมองตีบ',lv:'red',s:'คุณตาชาที่แขนและขาข้างขวา แล้วหายไปเองภายใน 10 นาที คุณตาบอกว่าไม่เป็นไรแล้ว',e:'แม้อาการหายเอง ก็อาจเป็นสัญญาณเตือนก่อนเกิดหลอดเลือดสมองตีบจริง ต้องรีบไปโรงพยาบาลทันที อย่ารอ'},
+ {c:'หลอดเลือดสมองตีบ',lv:'red',s:'คุณยายเดินเซ ทรงตัวไม่ได้ และบอกว่ามองไม่เห็นภาพข้างหนึ่งขึ้นมาทันที',e:'เดินเซ (B) และตามัวทันที (E) เป็นสัญญาณหลอดเลือดสมอง โทร 1669 ให้คุณยายนั่งหรือนอนในที่ปลอดภัย'},
+ {c:'กระดูกพรุน',lv:'red',s:'คุณยายลื่นล้มในห้องน้ำ เจ็บสะโพกมาก ลุกไม่ได้ ขาข้างหนึ่งดูบิดผิดรูป',e:'อาจกระดูกสะโพกหัก อย่าดึงหรืออุ้มให้ลุก ให้นอนนิ่ง ห่มผ้าให้อุ่น แล้วโทร 1669'},
+ {c:'กระดูกพรุน',lv:'red',s:'คุณตาหกล้ม ศีรษะกระแทกพื้น หลังจากนั้นง่วงซึม อาเจียน',e:'ศีรษะกระแทกแล้วซึมหรืออาเจียน อาจมีเลือดออกในสมอง ต้องโทร 1669 ทันที'},
+ {c:'อัลไซเมอร์',lv:'red',s:'คุณยายที่เป็นอัลไซเมอร์เดินออกจากบ้านไปตั้งแต่เช้า ตามหาทั่วซอยแล้วก็ไม่เจอ',e:'ผู้ป่วยอัลไซเมอร์ที่หายจากบ้านอาจหลงทางหรือได้รับอันตราย ให้ผู้ใหญ่แจ้งตำรวจ 191 ทันที พร้อมรูปถ่ายและเสื้อผ้าที่ใส่'},
+ {c:'หลอดเลือดสมอง หรือ อัลไซเมอร์?',lv:'red',s:'คุณตาปกติความจำดี แต่จู่ ๆ ก็สับสน พูดไม่รู้เรื่อง เรียกชื่อหลานไม่ได้ขึ้นมาทันที',e:'อัลไซเมอร์จะค่อย ๆ แย่ลงเป็นเดือนเป็นปี แต่ถ้าสับสนทันทีทันใด อาจเป็นหลอดเลือดสมอง ต้องโทร 1669'},
+ {c:'กล้ามเนื้อน้อย',lv:'yellow',s:'ช่วงนี้คุณตาลุกจากเก้าอี้ยากขึ้น ต้องใช้มือดันทุกครั้ง และเดินช้าลงเรื่อย ๆ',e:'อาจเป็นภาวะกล้ามเนื้อน้อย ไม่ฉุกเฉินแต่ควรบอกผู้ใหญ่ให้พาไปตรวจ ลองทำภารกิจ 4 ทดสอบลุกนั่งดูด้วย'},
+ {c:'อัลไซเมอร์',lv:'yellow',s:'คุณยายถามเรื่องเดิมซ้ำวันละหลายครั้ง วางกุญแจแล้วหาไม่เจอบ่อยขึ้นเรื่อย ๆ',e:'เป็นสัญญาณเริ่มต้นของสมองเสื่อม ควรพาไปพบแพทย์ ระหว่างนี้ตอบคุณยายอย่างใจเย็น ไม่ดุ'},
+ {c:'กระดูกพรุน',lv:'yellow',s:'คุณยายหลังค่อมขึ้นเรื่อย ๆ ตัวเตี้ยลง และปวดหลังบ่อย',e:'อาจเป็นกระดูกพรุน ควรพาไปตรวจความหนาแน่นของกระดูกกับแพทย์ และระวังไม่ให้หกล้ม'},
+ {c:'กล้ามเนื้อน้อย',lv:'yellow',s:'คุณตาหกล้มเบา ๆ ลุกได้เอง ไม่เจ็บมาก แต่เดือนนี้ล้มมาแล้ว 3 ครั้ง',e:'ล้มบ่อยแปลว่ากล้ามเนื้อหรือการทรงตัวมีปัญหา ควรพาไปหาหมอ ก่อนจะล้มแรงจนกระดูกหัก'},
+ {c:'กระดูกพรุน',lv:'green',s:'คุณยายสบายดี อยากให้กระดูกแข็งแรงไปนาน ๆ',e:'ดื่มนม กินปลาเล็กปลาน้อย ผักใบเขียว ออกไปรับแดดอ่อนตอนเช้า และเดินออกกำลังกายทุกวัน'},
+ {c:'กล้ามเนื้อน้อย',lv:'green',s:'คุณตาแข็งแรงดี แม่ถามว่าควรทำกับข้าวอะไรให้คุณตากล้ามเนื้อไม่ลดลง',e:'ทำอาหารที่มีโปรตีน เช่น ไข่ ปลา เต้าหู้ นม ทุกมื้อ และชวนคุณตาออกกำลังกายเบา ๆ เช่น ยืนเขย่งเท้า ลุกนั่ง'},
+ {c:'บ้านปลอดภัย',lv:'green',s:'พื้นห้องน้ำที่บ้านลื่นมาก และทางเดินตอนกลางคืนมืด',e:'ติดแผ่นกันลื่น ราวจับในห้องน้ำ และเปิดไฟทางเดินตอนกลางคืน ช่วยลดการหกล้มได้มาก'},
+ {c:'อัลไซเมอร์',lv:'green',s:'คุณยายเป็นอัลไซเมอร์ระยะแรก ครอบครัวอยากเตรียมตัวป้องกันคุณยายหลงทาง',e:'ทำป้ายชื่อ ที่อยู่ และเบอร์โทรของลูกหลานติดตัวคุณยาย ใส่สายรัดข้อมือ และเก็บรูปถ่ายล่าสุดไว้'}
+];
+let deck=[],ti=0,tscore=0,wrong=[];
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function startTriage(){deck=shuffle(SC).slice(0,10);ti=0;tscore=0;wrong=[];renderQ();}
+function renderQ(){
+  const q=deck[ti],box=$('#triageBox');
+  box.innerHTML=`<span class="eyebrow">ภารกิจ 1 · ข้อ ${ti+1} จาก ${deck.length} · ได้ ${tscore} คะแนน</span>
+  <div class="progress"><i style="width:${ti/deck.length*100}%"></i></div>
+  <div class="row"><span class="tag">${q.c}</span><button class="speak" id="say">อ่านให้ฟัง</button></div>
+  <p class="scene">${q.s}</p>
+  <p class="muted">เหตุการณ์นี้เป็นไฟสีอะไร</p>
+  <div class="choices">${['red','yellow','green'].map(k=>`<button class="choice ${k}" data-lv="${k}"><span class="dot"></span><span>${LV[k].t}<small>${LV[k].d}</small></span></button>`).join('')}</div>
+  <div id="fb"></div>`;
+  $('#say').onclick=()=>speak(q.s);
+  $$('.choice').forEach(b=>b.onclick=()=>answer(b.dataset.lv));
+}
+function answer(lv){
+  const q=deck[ti],ok=lv===q.lv;
+  $$('.choice').forEach(b=>{b.disabled=true;b.classList.add(b.dataset.lv===q.lv?'picked':'dim');});
+  if(ok)tscore++;else wrong.push(q);
+  beep(ok);
+  $('#fb').innerHTML=`<div class="feedback ${ok?'ok':'no'}"><b>${ok?'ถูกต้อง เก่งมาก!':'ยังไม่ใช่ คำตอบคือ '+LV[q.lv].t}</b><p>${q.e}</p></div>
+  <div class="row" style="margin-top:12px"><button class="btn" id="nextQ">${ti+1<deck.length?'ข้อต่อไป':'ดูผลคะแนน'}</button></div>`;
+  $('#nextQ').onclick=()=>{ti++;ti<deck.length?renderQ():endTriage();};
+  $('#nextQ').focus();
+}
+function endTriage(){
+  const st=tscore>=9?3:tscore>=7?2:tscore>=5?1:0; setStars('triage',st);
+  $('#triageBox').innerHTML=`<span class="eyebrow">ภารกิจ 1 เสร็จแล้ว</span><h2>ได้ ${tscore} จาก ${deck.length} คะแนน</h2>
+  <div class="stars" style="font-size:2rem">${starStr(st)}</div>
+  <p>${st===3?'สุดยอดฮีโร่! แยกความฉุกเฉินได้แม่นมาก':st>0?'เก่งแล้ว ลองอีกครั้งเพื่อเก็บดาวให้ครบ':'ลองอ่านบัตรความรู้ที่หน้าหลัก แล้วเล่นใหม่อีกครั้งนะ'}</p>
+  ${wrong.length?'<h3>ข้อที่ควรทบทวน</h3>'+wrong.map(w=>`<div class="feedback no"><b>${LV[w.lv].t}</b><p>${w.s}</p><p class="muted">${w.e}</p></div>`).join(''):''}
+  <div class="row"><button class="btn" id="again">เล่นอีกครั้ง</button><button class="btn ghost" data-go="home">กลับหน้าหลัก</button></div>`;
+  $('#again').onclick=startTriage;
+}
+
+/* ===== Mission 2: BE FAST ===== */
+const F=[
+ ['B','Balance ทรงตัว','ให้ลองยืนหรือเดินช้า ๆ ใกล้ ๆ ผู้ใหญ่','เดินเซ ทรงตัวไม่ได้ เวียนหัวมากทันที'],
+ ['E','Eyes ดวงตา','ถามว่ามองเห็นชัดไหม ลองชูนิ้วให้นับ','ตามัว เห็นภาพซ้อน หรือมองไม่เห็นข้างหนึ่งทันที'],
+ ['F','Face ใบหน้า','ให้ยิ้มกว้าง ๆ แล้วดูว่าสองข้างเท่ากันไหม','มุมปากตก หน้าเบี้ยวข้างหนึ่ง'],
+ ['A','Arm แขน','ให้ยกแขนสองข้างไปข้างหน้า ค้างไว้ 10 วินาที','แขนข้างหนึ่งตกลง อ่อนแรง หรือชา'],
+ ['S','Speech การพูด','ให้พูดตาม เช่น "วันนี้อากาศดี"','พูดไม่ชัด พูดไม่ได้ หรือฟังไม่เข้าใจ']
+];
+let fans={};
+function renderFast(){
+  $('#fastList').innerHTML=F.map(([l,n,how,bad])=>`<div class="fitem"><div class="letter">${l}</div><div>
+   <h3>${n}</h3><p><b>วิธีเช็ก:</b> ${how}</p><p class="muted"><b>ผิดปกติ:</b> ${bad}</p>
+   <div class="toggle"><button data-f="${l}" data-v="ok" class="${fans[l]==='ok'?'sel-ok':''}">ปกติ</button><button data-f="${l}" data-v="bad" class="${fans[l]==='bad'?'sel-bad':''}">ผิดปกติ</button></div></div></div>`).join('')
+   +`<div class="fitem"><div class="letter">T</div><div><h3>Time เวลา</h3><p>ถ้ามีข้อใดผิดปกติ ต้องรีบโทร 1669 และจำเวลาที่เริ่มมีอาการ ยิ่งถึงโรงพยาบาลเร็ว (ควรภายใน 4 ชั่วโมงครึ่ง) ยิ่งรักษาได้ผลดี</p></div></div>`;
+  $$('.toggle button').forEach(b=>b.onclick=()=>{fans[b.dataset.f]=b.dataset.v;renderFast();});
+  $('#fastCheck').disabled=Object.keys(fans).length<5;
+}
+$('#fastCheck').onclick=()=>{
+  const bad=F.filter(f=>fans[f[0]]==='bad');
+  const now=new Date(),tm=now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+  if(bad.length){beep(false);
+    $('#fastResult').innerHTML=`<div class="alarm" role="alert"><span>พบสัญญาณผิดปกติ: ${bad.map(b=>b[1]).join(', ')}</span>
+    <h2>ฉุกเฉิน! โทรเลย</h2><div class="big">1669</div>
+    <p>เวลาที่พบอาการ: <b>${tm} น.</b> บอกเวลานี้กับเจ้าหน้าที่</p>
+    <ol><li>ตะโกนเรียกผู้ใหญ่ให้มาช่วยทันที</li><li>โทร 1669 บอกอาการ ที่อยู่ และเวลาที่เริ่มเป็น</li><li>ให้นอนตะแคง หรือนั่งพิงในที่ปลอดภัย คลายเสื้อผ้าให้หลวม</li><li>ห้ามให้กินน้ำ อาหาร หรือยาทุกชนิด</li><li>อยู่ข้าง ๆ คอยดูอาการจนรถพยาบาลมาถึง</li></ol></div>`;
+  }else{beep(true);
+    $('#fastResult').innerHTML=`<div class="calm"><h2>ยังไม่พบสัญญาณอันตราย</h2><p>เช็กเมื่อ ${tm} น. ถ้าคุณตาคุณยายดูแปลกไปอีก ให้เช็กใหม่ทันที ถ้าไม่แน่ใจ โทรถาม 1669 ได้เสมอ</p></div>`;}
+  setStars('befast',3);
+  $('#fastResult').scrollIntoView({behavior:'smooth',block:'start'});
+};
+$('#fastReset').onclick=()=>{fans={};$('#fastResult').innerHTML='';renderFast();};
+renderFast();
+
+/* ===== Mission 3: memory ===== */
+const ITEMS=['👓','🔑','💊','☂️','🍚','📞'];
+let mem=[],open=[],moves=0,pairs=0,memT=0,memTimer=null,memStarted=false,lock=false;
+function buildBoard(){
+  memStarted=true;clearInterval(memTimer);memTimer=null;memT=0;moves=0;pairs=0;open=[];lock=false;
+  mem=shuffle(ITEMS.concat(ITEMS)).map(v=>({v,up:false,done:false}));
+  $('#memResult').innerHTML='';drawBoard();updMem();
+}
+function drawBoard(){
+  $('#board').innerHTML=mem.map((c,i)=>`<button class="card ${c.up||c.done?'face':''} ${c.done?'done':''}" data-i="${i}" aria-label="${c.up||c.done?c.v:'การ์ดคว่ำ'}">${c.up||c.done?c.v:'<span class="q">?</span>'}</button>`).join('');
+  $$('.card').forEach(b=>b.onclick=()=>flip(+b.dataset.i));
+}
+function updMem(){$('#memMoves').textContent=moves;$('#memTime').textContent=memT;$('#memPairs').textContent=pairs;}
+function flip(i){
+  const c=mem[i]; if(lock||c.up||c.done)return;
+  if(!memTimer)memTimer=setInterval(()=>{memT++;updMem();},1000);
+  c.up=true;open.push(i);drawBoard();
+  if(open.length===2){moves++;const [a,b]=open;
+    if(mem[a].v===mem[b].v){mem[a].done=mem[b].done=true;pairs++;open=[];beep(true);drawBoard();
+      if(pairs===6){clearInterval(memTimer);const st=moves<=10?3:moves<=15?2:1;setStars('memory',st);
+        $('#memResult').innerHTML=`<div class="feedback ok"><b>ครบ 6 คู่แล้ว! ${starStr(st)}</b><p>เปิด ${moves} รอบ ใช้เวลา ${memT} วินาที ลองชวนคุณตาคุณยายเล่นแข่งกัน แล้วบอกชื่อของแต่ละอย่างไปด้วย</p></div>`;}
+    }else{lock=true;setTimeout(()=>{mem[a].up=mem[b].up=false;open=[];lock=false;drawBoard();},900);}
+  }
+  updMem();
+}
+$('#memReset').onclick=buildBoard;
+
+/* ===== Mission 4: chair stand ===== */
+let cState='idle',cStart=0,cReps=0,cRAF=null;
+function cDraw(){$$('#reps i').forEach((el,i)=>el.classList.toggle('on',i<cReps));}
+function cTick(){$('#chairTime').textContent=((performance.now()-cStart)/1000).toFixed(1);cRAF=requestAnimationFrame(cTick);}
+$('#chairTap').onclick=()=>{
+  if(cState==='idle'){cState='run';cStart=performance.now();cReps=0;cDraw();cTick();
+    $('#chairTap').textContent='ยืนตรงแล้ว กดนับ (1)';$('#chairStop').hidden=false;$('#chairResult').innerHTML='';return;}
+  if(cState==='run'){cReps++;cDraw();beep(true);
+    if(cReps>=5)finishChair(true);else $('#chairTap').textContent='ยืนตรงแล้ว กดนับ ('+(cReps+1)+')';}
+};
+function finishChair(full){
+  cancelAnimationFrame(cRAF);cState='done';const t=(performance.now()-cStart)/1000;
+  $('#chairTime').textContent=t.toFixed(1);$('#chairTap').textContent='เสร็จแล้ว';$('#chairTap').disabled=true;$('#chairStop').hidden=true;
+  let html;
+  if(full&&t<12)html=`<div class="result good"><b>ใช้เวลา ${t.toFixed(1)} วินาที ขาแข็งแรงดี</b><p>เร็วกว่า 12 วินาที ผ่านเกณฑ์ ชวนคุณตาคุณยายออกกำลังกายต่อไปทุกวันนะ</p></div>`;
+  else if(full)html=`<div class="result warn"><b>ใช้เวลา ${t.toFixed(1)} วินาที ควรเฝ้าระวัง</b><p>ตั้งแต่ 12 วินาทีขึ้นไป อาจมีภาวะกล้ามเนื้อน้อยและเสี่ยงหกล้ม บอกผู้ใหญ่ให้พาไปปรึกษาแพทย์ กินอาหารโปรตีนและฝึกลุกนั่งทุกวัน</p></div>`;
+  else html=`<div class="result warn"><b>ทำได้ ${cReps} ครั้ง ไม่ครบ 5 ครั้ง</b><p>ลุกนั่งเองไม่ครบ อาจมีกล้ามเนื้อขาอ่อนแรงและเสี่ยงหกล้ม ควรพาไปปรึกษาแพทย์ และระวังการหกล้มในบ้าน</p></div>`;
+  $('#chairResult').innerHTML=html+'<p class="disclaimer">เกณฑ์ 12 วินาทีใช้คัดกรองเบื้องต้นตามแนวทางเอเชีย (AWGS 2019) ไม่ใช่การวินิจฉัย</p>';
+  setStars('chair',3);
+}
+$('#chairStop').onclick=()=>{if(cState==='run')finishChair(false);};
+$('#chairReset').onclick=()=>{cancelAnimationFrame(cRAF);cState='idle';cReps=0;cDraw();$('#chairTime').textContent='0.0';
+  $('#chairTap').disabled=false;$('#chairTap').textContent='เริ่มจับเวลา';$('#chairStop').hidden=true;$('#chairResult').innerHTML='';};
+
+/* ===== certificate ===== */
+const nameIn=$('#heroName');nameIn.value=S.name||'';
+function setName(){$('#certName').textContent=nameIn.value.trim()||'ฮีโร่จิ๋ว';S.name=nameIn.value;save();}
+nameIn.oninput=setName;setName();
+
+/* sos copy */
+$('#copySos').onclick=e=>{const b=e.currentTarget;
+  navigator.clipboard?.writeText('1669').then(()=>{b.textContent='คัดลอกแล้ว';setTimeout(()=>b.textContent='คัดลอกเบอร์',1500);})
+  .catch(()=>{const r=document.createRange();r.selectNodeContents(document.querySelector('.sos .num'));const s=getSelection();s.removeAllRanges();s.addRange(r);});};
+
+refreshStars();
+})();
+</script>
+
+</body>
+</html>
