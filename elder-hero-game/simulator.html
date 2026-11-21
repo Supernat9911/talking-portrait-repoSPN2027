@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}body{margin:0}</style>
+</head>
+<body>
+<title>กล่องฮีโร่จิ๋ว micro:bit</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mali:wght@500;600;700&family=Sarabun:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a workbench — the physical box + chair on the left, the phone running the game on the right, the USB message log under both, then build sheets */
+:root{
+  --bg:#EAF4F2; --surface:#FFFFFF; --sunk:#F4FAF9; --ink:#10302F; --muted:#4A6664; --line:#C6DCD8;
+  --teal:#0B7A72; --teal-soft:#D3EEEA; --on-teal:#FFFFFF;
+  --red:#C8102E; --red-soft:#FBE3E6; --on-red:#FFFFFF;
+  --amber:#9A5B00; --amber-soft:#FFF0D1;
+  --green:#2E7D32; --green-soft:#DDF2DE;
+  --star:#E8A000;
+  /* physical object colours: the same in both themes */
+  --case:#22302F; --case-edge:#3B4E4C; --pcb:#161A1A; --pad:#C9A44C; --led-off:#3A2020; --led-on:#FF3B30;
+  --lamp-r:#FF3B30; --lamp-y:#FFC21A; --lamp-g:#2FD16B; --btn-r:#E0242F; --btn-y:#F4B400; --btn-g:#1FA650;
+  --wire-r:#E0242F; --wire-y:#D99A00; --wire-g:#1FA650; --wire-b:#2F6FDB; --wire-p:#8E44AD; --wire-k:#555;
+  --font-display:"Mali","Sarabun",system-ui,sans-serif;
+  --font-body:"Sarabun",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0C1B1A; --surface:#142928; --sunk:#10201F; --ink:#E3F2EF; --muted:#9DB9B5; --line:#2A4644;
+  --teal:#4FC7BC; --teal-soft:#173B39; --on-teal:#05201E;
+  --red:#FF6B7C; --red-soft:#3B1A20; --on-red:#24060B;
+  --amber:#F5BE55; --amber-soft:#3A2C12; --green:#72CF7D; --green-soft:#17331B; --star:#F7C948;
+  --wire-k:#AAB; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0C1B1A; --surface:#142928; --sunk:#10201F; --ink:#E3F2EF; --muted:#9DB9B5; --line:#2A4644;
+  --teal:#4FC7BC; --teal-soft:#173B39; --on-teal:#05201E;
+  --red:#FF6B7C; --red-soft:#3B1A20; --on-red:#24060B;
+  --amber:#F5BE55; --amber-soft:#3A2C12; --green:#72CF7D; --green-soft:#17331B; --star:#F7C948;
+  --wire-k:#AAB; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:17px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 48px}
+.wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1,h2,h3{font-family:var(--font-display);line-height:1.3;text-wrap:balance;margin:0}
+h1{font-size:clamp(1.8rem,5.5vw,2.6rem)} h2{font-size:clamp(1.35rem,4vw,1.8rem)} h3{font-size:1.1rem}
+p{margin:0}
+.muted{color:var(--muted)}
+.eyebrow{font-size:.85rem;font-weight:600;letter-spacing:.06em;color:var(--teal)}
+button{font:inherit;cursor:pointer;border:0;border-radius:12px}
+button:focus-visible{outline:3px solid var(--teal);outline-offset:3px}
+.btn{background:var(--teal);color:var(--on-teal);padding:10px 18px;font-weight:700;min-height:46px}
+.btn.ghost{background:transparent;color:var(--teal);border:2px solid var(--teal)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.intro{display:flex;flex-direction:column;gap:8px;max-width:70ch}
+
+/* stage */
+.stage{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:22px;align-items:start}
+.bench{display:flex;flex-direction:column;gap:16px;align-items:center;min-width:0}
+.hint{font-size:.9rem;color:var(--muted);text-align:center}
+
+/* the box */
+.box{background:var(--case);border:3px solid var(--case-edge);border-radius:30px;padding:18px 18px 22px;width:100%;max-width:400px;
+  display:flex;flex-direction:column;gap:16px;align-items:center;box-shadow:0 10px 0 var(--case-edge)}
+.box .name{font-family:var(--font-display);color:#E8F2F0;font-size:1rem;font-weight:700;letter-spacing:.04em}
+.lamps{display:flex;gap:18px}
+.lamp{width:38px;height:38px;border-radius:50%;opacity:.25;transition:opacity .15s,box-shadow .15s;border:3px solid #0006}
+.lamp.r{background:var(--lamp-r)} .lamp.y{background:var(--lamp-y)} .lamp.g{background:var(--lamp-g)}
+.lamp.on{opacity:1} .lamp.r.on{box-shadow:0 0 22px var(--lamp-r)} .lamp.y.on{box-shadow:0 0 22px var(--lamp-y)} .lamp.g.on{box-shadow:0 0 22px var(--lamp-g)}
+.mb{background:var(--pcb);border-radius:12px;padding:12px 14px 0;width:210px;display:flex;flex-direction:column;align-items:center;gap:10px;border:1px solid #000}
+.mb .top{display:flex;align-items:center;gap:14px}
+.mb .ab{width:20px;height:20px;border-radius:50%;background:#333;border:3px solid #555}
+.matrix{display:grid;grid-template-columns:repeat(5,14px);gap:8px}
+.matrix i{width:14px;height:14px;border-radius:3px;background:var(--led-off);display:block}
+.matrix i.on{background:var(--led-on);box-shadow:0 0 8px var(--led-on)}
+.mb .lbl{font-family:var(--font-mono);font-size:.75rem;color:#CFD8D6}
+.pads{display:flex;gap:6px;width:100%;justify-content:space-between}
+.pads span{background:var(--pad);height:14px;border-radius:3px 3px 0 0;flex:1;font-family:var(--font-mono);font-size:.55rem;color:#3A2A00;text-align:center;line-height:14px}
+.pads span.big{flex:2}
+.arcade{display:flex;gap:16px}
+.arc{width:72px;height:72px;border-radius:50%;border:6px solid #111;box-shadow:0 6px 0 #0008, inset 0 -6px 0 #0003;transition:transform .08s,box-shadow .08s;color:#fff;font-weight:700;font-size:.8rem}
+.arc.r{background:var(--btn-r)} .arc.y{background:var(--btn-y);color:#2A1A00} .arc.g{background:var(--btn-g)}
+.arc:active,.arc.down,.sos:active,.sos.down{transform:translateY(5px);box-shadow:0 1px 0 #0008}
+.sosbase{background:#F4C21A;border-radius:50%;padding:10px;border:4px solid #111}
+.sos{width:96px;height:96px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FF6A6A,#C40010 70%);color:#fff;font-family:var(--font-display);font-size:1.5rem;font-weight:700;box-shadow:0 7px 0 #600, inset 0 -6px 0 #0003;transition:transform .08s}
+.arc-labels{display:flex;gap:16px;font-size:.72rem;color:#CFD8D6;text-align:center}
+.arc-labels span{width:72px}
+
+/* chair */
+.chairwrap{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;max-width:400px}
+.chair{background:var(--surface);border:2px dashed var(--line);border-radius:16px;padding:8px 10px;width:100%;color:var(--ink)}
+.chair svg{width:100%;max-width:100%;height:auto;display:block}
+.chair .stand{display:none} .chair.up .stand{display:inline} .chair.up .sit{display:none}
+.padglow{transition:fill .15s}
+.cable{font-family:var(--font-mono);font-size:.8rem;color:var(--muted);display:flex;align-items:center;gap:8px}
+.cable b{display:inline-block;width:46px;height:4px;background:var(--muted);border-radius:2px}
+
+/* phone */
+.phone{background:#0E1414;border-radius:38px;padding:14px;width:100%;max-width:360px;justify-self:center;box-shadow:0 12px 30px #0003}
+.screen{background:var(--bg);border-radius:26px;min-height:560px;padding:14px;display:flex;flex-direction:column;gap:12px;position:relative;overflow:hidden}
+.pbar{display:flex;justify-content:space-between;align-items:center;font-size:.8rem;color:var(--muted)}
+.conn{display:inline-flex;align-items:center;gap:6px;font-weight:600;color:var(--green)}
+.conn::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--green)}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--teal-soft);padding:4px;border-radius:12px}
+.tabs button{background:transparent;color:var(--teal);font-weight:700;padding:8px 4px;font-size:.9rem}
+.tabs button[aria-selected="true"]{background:var(--surface);box-shadow:0 1px 3px #0002}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.tag{align-self:flex-start;font-size:.78rem;font-weight:700;padding:2px 10px;border-radius:999px;background:var(--teal-soft);color:var(--teal)}
+.scene{font-size:1.05rem;font-weight:600;line-height:1.5}
+.press-hint{display:flex;gap:6px;align-items:center;font-size:.85rem;color:var(--muted)}
+.press-hint i{width:14px;height:14px;border-radius:50%;display:inline-block}
+.fb{border-radius:12px;padding:10px 12px;font-size:.92rem;display:flex;flex-direction:column;gap:4px}
+.fb.ok{background:var(--green-soft)} .fb.no{background:var(--red-soft)}
+.fb b{font-family:var(--font-display)}
+.timer{font-family:var(--font-display);font-size:3.4rem;font-weight:700;text-align:center;line-height:1;font-variant-numeric:tabular-nums}
+.reps{display:flex;justify-content:center;gap:8px}
+.reps i{width:24px;height:24px;border-radius:50%;border:3px solid var(--teal);display:block}
+.reps i.on{background:var(--teal)}
+.res{border-radius:12px;padding:10px 12px;font-size:.92rem}
+.res.good{background:var(--green-soft)} .res.warn{background:var(--amber-soft)}
+.alarm{position:absolute;inset:0;background:var(--red);color:var(--on-red);padding:22px 18px;display:flex;flex-direction:column;gap:10px;z-index:2}
+.alarm .big{font-family:var(--font-display);font-size:4rem;font-weight:700;line-height:1}
+.alarm ol{margin:0;padding-left:1.2em;font-size:.92rem}
+.alarm button{background:var(--on-red);color:var(--red);font-weight:700;padding:10px;margin-top:auto}
+.demo{display:flex;flex-direction:column;gap:6px;font-size:.88rem}
+.demo .row button{font-size:.85rem;padding:8px 10px;min-height:0}
+
+/* log */
+.log{font-family:var(--font-mono);font-size:.82rem;background:var(--sunk);border:1px solid var(--line);border-radius:12px;padding:10px 12px;height:180px;overflow:auto;display:flex;flex-direction:column;gap:2px}
+.log div{display:grid;grid-template-columns:5.5em 9.5em 1fr;gap:8px;white-space:nowrap}
+.log .t{color:var(--muted)} .log .up .d{color:var(--teal)} .log .down .d{color:var(--amber)}
+.log .msg{font-weight:600}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.85rem;color:var(--muted)}
+
+/* build sheets */
+.sheets{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+.scroll{overflow-x:auto}
+.wiring{min-width:640px}
+.wiring text{fill:var(--ink);font-family:var(--font-body);font-size:14px}
+.wiring .mono{font-family:var(--font-mono);font-size:13px;font-weight:600}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.8rem;color:var(--muted);letter-spacing:.04em}
+td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+pre{margin:0;background:var(--sunk);border:1px solid var(--line);border-radius:12px;padding:14px;overflow:auto;font-family:var(--font-mono);font-size:.8rem;line-height:1.55;max-height:460px}
+.proto{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:.92rem}
+.proto code{font-family:var(--font-mono);font-weight:600;color:var(--teal)}
+.full{grid-column:1/-1}
+.note{background:var(--amber-soft);border-radius:12px;padding:12px 14px;font-size:.92rem}
+
+@media (max-width:820px){.stage,.sheets{grid-template-columns:1fr}}
+@media (max-width:420px){.arc{width:60px;height:60px}.arc-labels span{width:60px}.sos{width:84px;height:84px}.matrix{grid-template-columns:repeat(5,12px);gap:7px}.matrix i{width:12px;height:12px}.mb{width:190px}}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="intro">
+    <span class="eyebrow">ตัวจำลองอุปกรณ์ · ใช้คู่กับเกมฮีโร่จิ๋วพิทักษ์ผู้สูงวัย</span>
+    <h1>กล่องไฟฉุกเฉินฮีโร่จิ๋ว</h1>
+    <p>ลองกดปุ่มบนกล่อง หรือแตะเก้าอี้ให้คุณตาลุกและนั่ง แล้วดูว่าเกมในมือถือตอบสนองอย่างไร ข้อความทุกบรรทัดที่วิ่งผ่านสาย USB จะขึ้นในช่องด้านล่าง</p>
+  </header>
+
+  <div class="stage">
+    <div class="bench">
+      <div class="box" aria-label="กล่องไฟฉุกเฉิน">
+        <span class="name">กล่องฮีโร่จิ๋ว</span>
+        <div class="lamps" aria-label="ไฟ LED สามสี"><span class="lamp r" id="lampR"></span><span class="lamp y" id="lampY"></span><span class="lamp g" id="lampG"></span></div>
+        <div class="mb">
+          <div class="top"><span class="ab" title="ปุ่ม A"></span><div class="matrix" id="matrix" aria-label="จอไฟ 5x5 ของ micro:bit"></div><span class="ab" title="ปุ่ม B"></span></div>
+          <span class="lbl">micro:bit V2</span>
+          <div class="pads"><span class="big">0</span><span class="big">1</span><span class="big">2</span><span class="big">3V</span><span class="big">GND</span></div>
+        </div>
+        <div class="arcade">
+          <button class="arc r" data-btn="R" aria-label="ปุ่มแดง ฉุกเฉิน">แดง</button>
+          <button class="arc y" data-btn="Y" aria-label="ปุ่มเหลือง เฝ้าระวัง">เหลือง</button>
+          <button class="arc g" data-btn="G" aria-label="ปุ่มเขียว ดูแลป้องกัน">เขียว</button>
+        </div>
+        <div class="arc-labels"><span>ฉุกเฉิน</span><span>เฝ้าระวัง</span><span>ป้องกัน</span></div>
+        <div class="sosbase"><button class="sos" id="sosBtn" aria-label="ปุ่มขอความช่วยเหลือ SOS">SOS</button></div>
+      </div>
+      <div class="cable"><b></b> สายแผ่นรองนั่งต่อเข้าขา P12 <b></b></div>
+      <div class="chairwrap">
+        <button class="chair" id="chair" aria-label="แตะเพื่อให้คุณตาลุกหรือนั่ง">
+          <svg viewBox="0 0 260 190" role="img" aria-label="เก้าอี้ที่มีแผ่นรองนั่ง">
+            <rect x="58" y="22" width="12" height="150" rx="4" fill="#8B5A2B"/>
+            <rect x="58" y="108" width="120" height="12" rx="4" fill="#8B5A2B"/>
+            <rect x="166" y="108" width="12" height="64" rx="4" fill="#8B5A2B"/>
+            <rect id="seatPad" class="padglow" x="72" y="99" width="104" height="9" rx="4" fill="#9FB6B2"/>
+            <g class="sit">
+              <circle cx="100" cy="40" r="15" fill="#E7B98F"/>
+              <path d="M88 32 q12 -14 26 0" fill="none" stroke="#DDD" stroke-width="6" stroke-linecap="round"/>
+              <rect x="86" y="56" width="28" height="44" rx="10" fill="#3B7DD8"/>
+              <rect x="100" y="86" width="56" height="14" rx="7" fill="#4A4A6A"/>
+              <rect x="146" y="90" width="14" height="66" rx="7" fill="#4A4A6A"/>
+              <rect x="140" y="152" width="28" height="10" rx="5" fill="#333"/>
+              <rect x="94" y="64" width="30" height="10" rx="5" fill="#E7B98F"/>
+            </g>
+            <g class="stand">
+              <circle cx="212" cy="22" r="15" fill="#E7B98F"/>
+              <path d="M200 14 q12 -14 26 0" fill="none" stroke="#DDD" stroke-width="6" stroke-linecap="round"/>
+              <rect x="198" y="38" width="28" height="56" rx="10" fill="#3B7DD8"/>
+              <rect x="200" y="90" width="12" height="72" rx="6" fill="#4A4A6A"/>
+              <rect x="212" y="90" width="12" height="72" rx="6" fill="#4A4A6A"/>
+              <rect x="194" y="158" width="36" height="10" rx="5" fill="#333"/>
+              <rect x="204" y="50" width="30" height="10" rx="5" fill="#E7B98F"/>
+            </g>
+            <text x="124" y="186" text-anchor="middle" font-size="12" fill="currentColor" id="chairTxt">คุณตานั่งอยู่ · แผ่นรองถูกกด</text>
+          </svg>
+        </button>
+        <p class="hint">แตะเก้าอี้เพื่อสลับลุกและนั่ง</p>
+      </div>
+    </div>
+
+    <div class="phone" aria-label="มือถือที่เปิดเกม">
+      <div class="screen" id="screen">
+        <div class="pbar"><span>ฮีโร่จิ๋ว</span><span class="conn">เชื่อมกล่องแล้ว (USB)</span></div>
+        <div class="tabs" role="tablist">
+          <button role="tab" id="tabT" aria-selected="true">ภารกิจ 1 ไฟจราจร</button>
+          <button role="tab" id="tabC" aria-selected="false">ภารกิจ 4 ลุกนั่ง</button>
+        </div>
+        <div id="app"></div>
+        <div class="alarm" id="alarm" hidden>
+          <span>กดปุ่ม SOS จากกล่อง</span>
+          <h2>ฉุกเฉิน! โทรเลย</h2>
+          <div class="big">1669</div>
+          <p>เวลาที่กด: <b id="sosTime"></b></p>
+          <ol><li>ตะโกนเรียกผู้ใหญ่</li><li>โทร 1669 บอกอาการ ที่อยู่ และเวลา</li><li>ห้ามให้กินน้ำ อาหาร หรือยา</li><li>อยู่ข้าง ๆ จนรถพยาบาลมาถึง</li></ol>
+          <button id="sosClear">ปิดการแจ้งเตือน</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="row" style="justify-content:space-between"><h3>ข้อความที่วิ่งผ่านสาย USB</h3><button class="btn ghost" id="clearLog" style="min-height:0;padding:6px 12px">ล้าง</button></div>
+    <div class="legend"><span style="color:var(--teal)">▲ micro:bit → แอป</span><span style="color:var(--amber)">▼ แอป → micro:bit</span></div>
+    <div class="log" id="log" aria-live="polite"></div>
+  </section>
+
+  <h2>ใบงานสำหรับสร้างของจริง</h2>
+  <div class="sheets">
+    <section class="panel full">
+      <h3>วงจรต่อสาย</h3>
+      <p class="muted">ปุ่มทุกปุ่มและแผ่นรองนั่งต่อระหว่างขาของ micro:bit กับ GND ส่วนไฟ LED ต่อผ่านตัวต้านทาน 220 โอห์ม ขา P8 ถึง P15 ต้องใช้บอร์ดขยายขา</p>
+      <div class="scroll">
+        <svg class="wiring" viewBox="0 0 760 390" role="img" aria-label="แผนผังการต่อสาย">
+          <rect x="30" y="20" width="160" height="350" rx="14" fill="var(--sunk)" stroke="var(--line)" stroke-width="2"/>
+          <text x="110" y="48" text-anchor="middle" style="font-weight:700">micro:bit</text>
+          <text x="110" y="66" text-anchor="middle" style="font-size:12px" fill="var(--muted)">+ บอร์ดขยายขา</text>
+          <g id="wires"></g>
+        </svg>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>ภาษาที่กล่องคุยกับแอป</h3>
+      <p class="muted">ส่งเป็นข้อความสั้น ๆ ทีละบรรทัดผ่านสาย USB ความเร็ว 115200</p>
+      <div class="proto">
+        <code>BTN:R / Y / G</code><span>กดปุ่มแดง เหลือง เขียว</span>
+        <code>SOS</code><span>กดปุ่มขอความช่วยเหลือ</span>
+        <code>SEAT:1 / 0</code><span>มีคนนั่ง / ลุกจากแผ่นรอง</span>
+        <code>OK / NO</code><span>แอปบอกว่าตอบถูก / ผิด</span>
+        <code>LED:R / Y / G / OFF</code><span>แอปสั่งเปิดไฟสี</span>
+        <code>GO</code><span>เริ่มจับเวลาลุกนั่ง</span>
+        <code>NUM:1–5</code><span>แสดงจำนวนครั้งบนจอไฟ</span>
+        <code>CLEAR</code><span>ปิดเสียงเตือน SOS</span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>รายการอุปกรณ์</h3>
+      <table>
+        <thead><tr><th>อุปกรณ์</th><th>จำนวน</th><th>ราคาโดยประมาณ</th></tr></thead>
+        <tbody>
+          <tr><td>micro:bit V2 (มีลำโพงในตัว)</td><td class="num">1</td><td class="num">700–900 บาท</td></tr>
+          <tr><td>บอร์ดขยายขา (edge connector breakout)</td><td class="num">1</td><td class="num">150–250 บาท</td></tr>
+          <tr><td>ปุ่มอาร์เคด 30 มม. แดง เหลือง เขียว</td><td class="num">3</td><td class="num">30–50 บาท/ปุ่ม</td></tr>
+          <tr><td>ปุ่มกดใหญ่สีแดงสำหรับ SOS</td><td class="num">1</td><td class="num">50–120 บาท</td></tr>
+          <tr><td>LED 10 มม. แดง เหลือง เขียว + ตัวต้านทาน 220 โอห์ม</td><td class="num">3 ชุด</td><td class="num">ราว 30 บาท</td></tr>
+          <tr><td>สายจัมเปอร์ และสาย USB</td><td class="num">1 ชุด</td><td class="num">50–100 บาท</td></tr>
+          <tr><td>แผ่นรองนั่ง: ฟองน้ำเจาะรู ประกบฟอยล์ 2 แผ่น</td><td class="num">1</td><td class="num">ของในบ้าน</td></tr>
+          <tr><td>กล่อง (กล่องพลาสติกหรือกระดาษแข็ง ทาสี)</td><td class="num">1</td><td class="num">ของในบ้าน</td></tr>
+        </tbody>
+      </table>
+      <p class="muted" style="font-size:.88rem">รวมราว 1,100–1,600 บาท ราคาแตกต่างตามร้าน</p>
+    </section>
+
+    <section class="panel full">
+      <div class="row" style="justify-content:space-between"><h3>โค้ดสำหรับ micro:bit (MakeCode · JavaScript)</h3><button class="btn ghost" id="copyCode" style="min-height:0;padding:6px 12px">คัดลอกโค้ด</button></div>
+      <p class="muted">เปิด makecode.microbit.org สร้างโปรเจกต์ใหม่ กดแท็บ JavaScript แล้ววางโค้ดนี้ จากนั้นกด Download ลงบอร์ด</p>
+      <pre id="code"></pre>
+      <div class="note">ตัวจำลองนี้เปิดดูได้ทุกที่ แต่ของจริงต้องเปิดเกมใน Chrome หรือ Edge บนคอมพิวเตอร์ หรือมือถือ Android ที่ต่อสาย USB ได้ เพราะเกมรับข้อมูลผ่าน Web Serial ซึ่ง iPhone ยังไม่รองรับ</div>
+    </section>
+  </div>
+</div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+
+/* ---------- sound ---------- */
+let ac=null;
+function tone(f,ms,type){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();
+  o.type=type||'square';o.frequency.value=f;o.connect(g);g.connect(ac.destination);g.gain.setValueAtTime(.06,ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+ms/1000);o.start();o.stop(ac.currentTime+ms/1000+.02);}catch(e){}}
+
+/* ---------- USB log ---------- */
+const logEl=$('#log');
+function log(dir,msg){const d=document.createElement('div');d.className=dir;
+  const t=new Date().toLocaleTimeString('th-TH',{hour12:false});
+  d.innerHTML=`<span class="t">${t}</span><span class="d">${dir==='up'?'▲ micro:bit → แอป':'▼ แอป → micro:bit'}</span><span class="msg"></span>`;
+  d.querySelector('.msg').textContent=msg;logEl.appendChild(d);logEl.scrollTop=logEl.scrollHeight;}
+$('#clearLog').onclick=()=>logEl.innerHTML='';
+
+/* ================= DEVICE (micro:bit side) ================= */
+const PAT={
+ heart:'0101011111111110111000100', check:'0000000001000101010001000', cross:'1000101010001000101010001',
+ excl:'0010000100001000000000100', up:'0010001110101010010000100', blank:'0000000000000000000000000',
+ n1:'0010001100001000010001110', n2:'1110000010011001000011110', n3:'1111000010001001001001100',
+ n4:'0011001010100101111100010', n5:'1111110000111100000111110'};
+const mx=$('#matrix');mx.innerHTML='<i></i>'.repeat(25);const cells=[...mx.children];
+function show(p){const s=PAT[p];cells.forEach((c,i)=>c.classList.toggle('on',s[i]==='1'));}
+function lamps(c){['R','Y','G'].forEach(k=>$('#lamp'+k).classList.toggle('on',k===c));}
+let seated=true,sosOn=false,sosTimer=null,sosBlink=false;
+const dev={
+  send(msg){log('up',msg);app.onMsg(msg);},
+  onCmd(cmd){
+    if(cmd==='OK'){show('check');tone(1046,120,'square');setTimeout(()=>tone(1568,160,'square'),120);}
+    else if(cmd==='NO'){show('cross');tone(196,300,'sawtooth');}
+    else if(cmd.startsWith('LED:')){const c=cmd.slice(4);lamps(c==='OFF'?null:c);if(c==='OFF'&&!sosOn)show('heart');}
+    else if(cmd==='GO'){show('up');tone(784,200);}
+    else if(cmd.startsWith('NUM:')){show('n'+cmd.slice(4));}
+    else if(cmd==='CLEAR'){stopSos();}
+  }
+};
+function startSos(){if(sosOn)return;sosOn=true;
+  sosTimer=setInterval(()=>{sosBlink=!sosBlink;show(sosBlink?'excl':'blank');lamps(sosBlink?'R':null);tone(sosBlink?988:659,240,'square');},260);}
+function stopSos(){sosOn=false;clearInterval(sosTimer);lamps(null);show('heart');}
+function press(el){el.classList.add('down');setTimeout(()=>el.classList.remove('down'),120);}
+$$('.arc').forEach(b=>b.onclick=()=>{press(b);tone(523,60);dev.send('BTN:'+b.dataset.btn);});
+$('#sosBtn').onclick=e=>{press(e.currentTarget);dev.send('SOS');startSos();};
+function setSeat(v){seated=v;$('#chair').classList.toggle('up',!v);
+  $('#seatPad').setAttribute('fill',v?'#2FD16B':'#9FB6B2');
+  $('#chairTxt').textContent=v?'คุณตานั่งอยู่ · แผ่นรองถูกกด':'คุณตายืนขึ้น · แผ่นรองว่าง';
+  dev.send(v?'SEAT:1':'SEAT:0');}
+$('#chair').onclick=()=>{if(demoRunning)return;setSeat(!seated);};
+show('heart');$('#seatPad').setAttribute('fill','#2FD16B');
+
+/* ================= APP (phone side) ================= */
+const SC=[
+ {c:'หลอดเลือดสมองตีบ',lv:'R',s:'คุณตากำลังกินข้าว แล้วมุมปากข้างหนึ่งตกลงทันที พูดไม่ชัด',e:'สัญญาณหลอดเลือดสมองตีบ โทร 1669 และจดเวลาที่เริ่มเป็น'},
+ {c:'กระดูกพรุน',lv:'R',s:'คุณยายลื่นล้มในห้องน้ำ เจ็บสะโพกมาก ลุกไม่ได้',e:'อาจกระดูกสะโพกหัก อย่าดึงให้ลุก ให้นอนนิ่งแล้วโทร 1669'},
+ {c:'อัลไซเมอร์',lv:'R',s:'คุณยายที่เป็นอัลไซเมอร์ออกจากบ้านไปตั้งแต่เช้า ตามหาแล้วไม่เจอ',e:'ให้ผู้ใหญ่แจ้งตำรวจ 191 ทันที พร้อมรูปถ่ายและเสื้อผ้าที่ใส่'},
+ {c:'กล้ามเนื้อน้อย',lv:'Y',s:'ช่วงนี้คุณตาลุกจากเก้าอี้ยาก ต้องใช้มือดันทุกครั้ง',e:'อาจเป็นภาวะกล้ามเนื้อน้อย บอกผู้ใหญ่ให้พาไปตรวจ และลองภารกิจ 4'},
+ {c:'อัลไซเมอร์',lv:'Y',s:'คุณยายถามเรื่องเดิมซ้ำวันละหลายครั้ง และหากุญแจไม่เจอบ่อยขึ้น',e:'สัญญาณเริ่มต้นของสมองเสื่อม ควรพาไปพบแพทย์'},
+ {c:'บ้านปลอดภัย',lv:'G',s:'พื้นห้องน้ำที่บ้านลื่นมาก และทางเดินตอนกลางคืนมืด',e:'ติดแผ่นกันลื่น ราวจับ และเปิดไฟทางเดิน ช่วยลดการหกล้ม'},
+ {c:'กระดูกพรุน',lv:'G',s:'คุณยายสบายดี อยากให้กระดูกแข็งแรงไปนาน ๆ',e:'ดื่มนม กินปลาเล็กปลาน้อย รับแดดอ่อนตอนเช้า และเดินทุกวัน'}
+];
+const LVN={R:'ไฟแดง ฉุกเฉิน',Y:'ไฟเหลือง เฝ้าระวัง',G:'ไฟเขียว ดูแลป้องกัน'};
+const appEl=$('#app');
+const app={mode:'triage',qi:0,answered:false,score:0,
+  cState:'idle',cCount:0,t0:0,raf:null,
+  send(cmd){log('down',cmd);dev.onCmd(cmd);},
+  onMsg(m){
+    if(m==='SOS'){$('#sosTime').textContent=new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',second:'2-digit'})+' น.';$('#alarm').hidden=false;return;}
+    if(this.mode==='triage'&&m.startsWith('BTN:'))this.answer(m.slice(4));
+    if(this.mode==='chair'&&m==='SEAT:0'&&this.cState==='run')this.rise();
+  },
+  render(){
+    $('#tabT').setAttribute('aria-selected',this.mode==='triage');$('#tabC').setAttribute('aria-selected',this.mode==='chair');
+    this.mode==='triage'?this.renderT():this.renderC();
+  },
+  renderT(){const q=SC[this.qi];this.answered=false;
+    appEl.innerHTML=`<div class="card"><span class="muted" style="font-size:.82rem">ข้อ ${this.qi+1} จาก ${SC.length} · ได้ ${this.score} คะแนน</span>
+    <span class="tag">${q.c}</span><p class="scene">${q.s}</p>
+    <div class="press-hint">กดปุ่มบนกล่อง <i style="background:var(--btn-r)"></i><i style="background:var(--btn-y)"></i><i style="background:var(--btn-g)"></i> เพื่อตอบ</div>
+    <div id="fb"></div></div>`;},
+  answer(c){if(this.answered)return;this.answered=true;const q=SC[this.qi],ok=c===q.lv;if(ok)this.score++;
+    this.send(ok?'OK':'NO');this.send('LED:'+q.lv);
+    $('#fb').innerHTML=`<div class="fb ${ok?'ok':'no'}"><b>${ok?'ถูกต้อง!':'ยังไม่ใช่ คำตอบคือ '+LVN[q.lv]}</b><span>${q.e}</span></div>
+    <button class="btn" id="nx" style="margin-top:8px">${this.qi+1<SC.length?'ข้อต่อไป':'เริ่มใหม่'}</button>`;
+    $('#nx').onclick=()=>{this.send('LED:OFF');if(this.qi+1<SC.length)this.qi++;else{this.qi=0;this.score=0;}this.renderT();};},
+  renderC(){
+    appEl.innerHTML=`<div class="card">
+      <p style="font-size:.92rem">ให้คุณตานั่งบนแผ่นรอง กอดอก แล้วกดเริ่ม ระบบจะนับเองทุกครั้งที่คุณตาลุกขึ้นจากแผ่นรอง</p>
+      <div class="timer" id="ct">0.0</div><div class="reps" id="cr">${'<i></i>'.repeat(5)}</div>
+      <button class="btn" id="cStart">เริ่มทดสอบ</button><div id="cRes"></div></div>
+      <div class="card demo"><b>ให้คุณตาจำลองลุกนั่งเอง</b>
+      <div class="row"><button class="btn ghost" data-p="1.8">แข็งแรง (ราว 8 วินาที)</button><button class="btn ghost" data-p="2.8">อ่อนแรง (ราว 13 วินาที)</button></div></div>`;
+    $('#cStart').onclick=()=>this.startC();
+    $$('[data-p]').forEach(b=>b.onclick=()=>runDemo(+b.dataset.p));
+    this.cState='idle';this.cCount=0;},
+  startC(){
+    if(!seated){$('#cRes').innerHTML='<div class="res warn">ให้คุณตานั่งบนแผ่นรองก่อน แล้วค่อยกดเริ่ม</div>';return false;}
+    cancelAnimationFrame(this.raf);this.cState='run';this.cCount=0;this.t0=performance.now();$('#cRes').innerHTML='';
+    $$('#cr i').forEach(i=>i.classList.remove('on'));$('#cStart').disabled=true;this.send('LED:OFF');this.send('GO');
+    const tick=()=>{if(this.cState!=='run')return;$('#ct').textContent=((performance.now()-this.t0)/1000).toFixed(1);this.raf=requestAnimationFrame(tick);};tick();return true;},
+  rise(){this.cCount++;$$('#cr i').forEach((i,k)=>i.classList.toggle('on',k<this.cCount));this.send('NUM:'+this.cCount);
+    if(this.cCount>=5){this.cState='done';cancelAnimationFrame(this.raf);const t=(performance.now()-this.t0)/1000;$('#ct').textContent=t.toFixed(1);
+      const good=t<12;this.send(good?'LED:G':'LED:Y');$('#cStart').disabled=false;$('#cStart').textContent='ทดสอบอีกครั้ง';
+      $('#cRes').innerHTML=good?`<div class="res good"><b>${t.toFixed(1)} วินาที ขาแข็งแรงดี</b><br>เร็วกว่า 12 วินาที ผ่านเกณฑ์</div>`
+        :`<div class="res warn"><b>${t.toFixed(1)} วินาที ควรเฝ้าระวัง</b><br>ตั้งแต่ 12 วินาทีขึ้นไป เสี่ยงกล้ามเนื้อน้อยและหกล้ม ควรปรึกษาแพทย์</div>`;}}
+};
+let demoRunning=false,demoT=[];
+function runDemo(P){if(demoRunning)return;
+  if(!seated)setSeat(true);
+  if(!app.startC())return;demoRunning=true;$$('[data-p]').forEach(b=>b.disabled=true);
+  for(let k=1;k<=5;k++){demoT.push(setTimeout(()=>setSeat(false),(k*P-P/2)*1000));
+    demoT.push(setTimeout(()=>{setSeat(true);if(k===5){demoRunning=false;$$('[data-p]').forEach(b=>b.disabled=false);}},(k*P)*1000));}
+}
+function stopDemo(){demoT.forEach(clearTimeout);demoT=[];demoRunning=false;}
+$('#tabT').onclick=()=>{stopDemo();cancelAnimationFrame(app.raf);app.mode='triage';app.send('LED:OFF');app.render();};
+$('#tabC').onclick=()=>{app.mode='chair';app.send('LED:OFF');app.render();};
+$('#sosClear').onclick=()=>{$('#alarm').hidden=true;app.send('CLEAR');};
+app.render();
+
+/* ================= wiring diagram ================= */
+const W=[['P0','ปุ่มแดง','btn','--wire-r'],['P1','ปุ่มเหลือง','btn','--wire-y'],['P2','ปุ่มเขียว','btn','--wire-g'],
+ ['P8','ปุ่ม SOS','btn','--wire-r'],['P12','แผ่นรองนั่ง','pad','--wire-b'],
+ ['P13','LED แดง','led','--wire-r'],['P14','LED เหลือง','led','--wire-y'],['P15','LED เขียว','led','--wire-g']];
+let g='';const Y=i=>96+i*34,gy=Y(8);
+W.forEach(([pin,name,kind,col],i)=>{const y=Y(i),c=`var(${col})`;
+  g+=`<text x="166" y="${y+5}" text-anchor="end" class="mono">${pin}</text><circle cx="190" cy="${y}" r="5" fill="${c}"/>`;
+  g+=`<line x1="190" y1="${y}" x2="330" y2="${y}" stroke="${c}" stroke-width="3"/>`;
+  if(kind==='btn'){g+=`<circle cx="336" cy="${y}" r="5" fill="none" stroke="var(--ink)" stroke-width="2"/><circle cx="380" cy="${y}" r="5" fill="none" stroke="var(--ink)" stroke-width="2"/>
+     <line x1="334" y1="${y-12}" x2="382" y2="${y-12}" stroke="var(--ink)" stroke-width="2"/><line x1="358" y1="${y-12}" x2="358" y2="${y-20}" stroke="var(--ink)" stroke-width="2"/>
+     <line x1="385" y1="${y}" x2="560" y2="${y}" stroke="var(--wire-k)" stroke-width="2"/>`;}
+  else if(kind==='pad'){g+=`<rect x="333" y="${y-8}" width="50" height="5" fill="var(--muted)"/><rect x="333" y="${y+3}" width="50" height="5" fill="var(--muted)"/>
+     <line x1="383" y1="${y+5}" x2="560" y2="${y+5}" stroke="var(--wire-k)" stroke-width="2"/><line x1="330" y1="${y}" x2="333" y2="${y-5}" stroke="var(--wire-b)" stroke-width="3"/>`;}
+  else{g+=`<rect x="330" y="${y-7}" width="44" height="14" rx="3" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/><text x="352" y="${y+4}" text-anchor="middle" style="font-size:9px" class="mono">220Ω</text>
+     <line x1="374" y1="${y}" x2="396" y2="${y}" stroke="var(--ink)" stroke-width="2"/>
+     <path d="M396 ${y-9} L414 ${y} L396 ${y+9} Z" fill="${c}" stroke="var(--ink)" stroke-width="1.5"/><line x1="414" y1="${y-9}" x2="414" y2="${y+9}" stroke="var(--ink)" stroke-width="2"/>
+     <line x1="414" y1="${y}" x2="560" y2="${y}" stroke="var(--wire-k)" stroke-width="2"/>`;}
+  g+=`<text x="440" y="${y-6}" style="font-size:13px">${name}</text>`;});
+g+=`<line x1="560" y1="${Y(0)}" x2="560" y2="${gy}" stroke="var(--wire-k)" stroke-width="3"/>
+ <line x1="190" y1="${gy}" x2="560" y2="${gy}" stroke="var(--wire-k)" stroke-width="3"/>
+ <text x="166" y="${gy+5}" text-anchor="end" class="mono">GND</text><circle cx="190" cy="${gy}" r="5" fill="var(--wire-k)"/>
+ <text x="580" y="${(Y(0)+gy)/2-8}">สาย GND รวม</text><text x="580" y="${(Y(0)+gy)/2+12}" style="font-size:12px" fill="var(--muted)">ทุกชิ้นต่อกลับมาที่นี่</text>`;
+$('#wires').innerHTML=g;
+
+/* ================= MakeCode source ================= */
+const CODE=`// กล่องไฟฉุกเฉินฮีโร่จิ๋ว · micro:bit V2 · MakeCode JavaScript
+// ปุ่ม: P0 แดง, P1 เหลือง, P2 เขียว, P8 SOS · แผ่นรองนั่ง: P12 · LED: P13 แดง, P14 เหลือง, P15 เขียว
+// ทุกปุ่มต่อระหว่างขากับ GND (กด = 0)
+
+const IN_PINS = [DigitalPin.P0, DigitalPin.P1, DigitalPin.P2, DigitalPin.P8, DigitalPin.P12]
+const IN_MSG = ["BTN:R", "BTN:Y", "BTN:G", "SOS", "SEAT"]
+const LED_PINS = [DigitalPin.P13, DigitalPin.P14, DigitalPin.P15]
+let last = [1, 1, 1, 1, 1]
+let sosOn = false
+
+function lampsOff() {
+    for (let i = 0; i < 3; i++) pins.digitalWritePin(LED_PINS[i], 0)
+}
+function lamp(i: number) {
+    lampsOff()
+    pins.digitalWritePin(LED_PINS[i], 1)
+}
+
+function startSos() {
+    if (sosOn) return
+    sosOn = true
+    control.inBackground(function () {
+        while (sosOn) {
+            lamp(0)
+            basic.showLeds(\`
+                . . # . .
+                . . # . .
+                . . # . .
+                . . . . .
+                . . # . .
+                \`, 0)
+            music.playTone(988, 250)
+            lampsOff()
+            basic.clearScreen()
+            music.playTone(659, 250)
+        }
+        basic.showIcon(IconNames.Heart)
+    })
+}
+
+serial.redirectToUSB()
+serial.setBaudRate(BaudRate.BaudRate115200)
+for (let i = 0; i < IN_PINS.length; i++) pins.setPull(IN_PINS[i], PinPullMode.PullUp)
+lampsOff()
+basic.showIcon(IconNames.Heart)
+
+// อ่านปุ่มและแผ่นรองนั่ง ส่งให้แอปเมื่อมีการเปลี่ยนแปลง
+basic.forever(function () {
+    for (let i = 0; i < IN_PINS.length; i++) {
+        const v = pins.digitalReadPin(IN_PINS[i])
+        if (v != last[i]) {
+            last[i] = v
+            if (i == 4) {
+                serial.writeLine(v == 0 ? "SEAT:1" : "SEAT:0")
+            } else if (v == 0) {
+                serial.writeLine(IN_MSG[i])
+                if (i == 3) startSos()
+                else music.playTone(523, 60)
+            }
+        }
+    }
+    basic.pause(20)
+})
+
+// รับคำสั่งจากแอป
+serial.onDataReceived(serial.delimiters(Delimiters.NewLine), function () {
+    const cmd = serial.readUntil(serial.delimiters(Delimiters.NewLine))
+    if (cmd == "OK") {
+        basic.showIcon(IconNames.Yes)
+        music.playTone(1046, 120)
+        music.playTone(1568, 160)
+    } else if (cmd == "NO") {
+        basic.showIcon(IconNames.No)
+        music.playTone(196, 300)
+    } else if (cmd == "LED:R") lamp(0)
+    else if (cmd == "LED:Y") lamp(1)
+    else if (cmd == "LED:G") lamp(2)
+    else if (cmd == "LED:OFF") {
+        lampsOff()
+        if (!sosOn) basic.showIcon(IconNames.Heart)
+    } else if (cmd == "GO") {
+        basic.showArrow(ArrowNames.North)
+        music.playTone(784, 200)
+    } else if (cmd.substr(0, 4) == "NUM:") {
+        basic.showNumber(parseInt(cmd.substr(4)))
+    } else if (cmd == "CLEAR") {
+        sosOn = false
+        lampsOff()
+    }
+})
+`;
+$('#code').textContent=CODE;
+$('#copyCode').onclick=e=>{const b=e.currentTarget;
+  navigator.clipboard?.writeText(CODE).then(()=>{b.textContent='คัดลอกแล้ว';setTimeout(()=>b.textContent='คัดลอกโค้ด',1500);})
+  .catch(()=>{const r=document.createRange();r.selectNodeContents($('#code'));const s=getSelection();s.removeAllRanges();s.addRange(r);});};
+})();
+</script>
+
+</body>
+</html>
