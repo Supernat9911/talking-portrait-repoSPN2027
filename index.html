@@ -145,6 +145,33 @@ td.num-cell{font-family:var(--font-mono);white-space:nowrap;font-variant-numeric
 .callout p{color:var(--ink);max-width:68ch}
 ul.tight{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+/* ---------- Smart TV (10-foot UI, remote D-pad) ---------- */
+.tvtoggle{font-size:.8rem}
+html.tv{font-size:clamp(18px,1.25vw,30px)}
+html.tv body{font-size:1rem;padding:3.5vh 5vw 5vh;overflow-x:hidden}
+html.tv .page{max-width:none;gap:2vh}
+html.tv h1{font-size:2rem}
+html.tv header.top .lede{font-size:.9rem}
+html.tv .blueprint{display:none}
+html.tv .work{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:2vw}
+html.tv .stage-wrap{width:min(100%,calc(66vh * var(--ar)))}
+html.tv .steps{max-height:76vh;overflow-y:auto;scroll-behavior:smooth;padding:6px}
+html.tv button,html.tv .filebtn,html.tv .voice select{font-size:1rem;padding:.55em 1.1em;border-radius:10px}
+html.tv .gallery{grid-template-columns:repeat(auto-fill,minmax(5.5rem,1fr))}
+html.tv .voice .vplay{width:2.4rem;height:2.4rem}
+html.tv .voice .x,html.tv .x{width:2rem;height:2rem}
+html.tv .slider{grid-template-columns:minmax(0,11rem) minmax(0,1fr) 4rem}
+html.tv .slider input{height:2rem}
+html.tv .pin{width:34px;height:34px;margin:-17px 0 0 -17px}
+html.tv .pin::after{font-size:.8rem}
+html.tv .drop{padding:1.2rem}
+html.tv :focus{outline:none}
+html.tv .tv-focus,html.tv .drop:focus-within{outline:4px solid var(--warm)!important;outline-offset:4px;box-shadow:0 0 0 10px color-mix(in srgb,var(--warm) 22%,transparent);position:relative;z-index:2}
+html.tv .pin.tv-focus{outline-offset:2px}
+.tvhint{display:none}
+html.tv .tvhint{display:flex;flex-wrap:wrap;gap:.4rem 1.4rem;font-size:.8rem;color:var(--muted)}
+.tvhint kbd{font-family:var(--font-mono);font-size:.75rem;border:1px solid var(--line);border-radius:5px;padding:0 .4em;background:var(--surface);color:var(--ink)}
+@media (max-width:900px){html.tv .work{grid-template-columns:minmax(0,1fr)}html.tv .steps{max-height:none}}
 </style>
 
 <div class="page">
@@ -153,8 +180,14 @@ ul.tight{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px}
       <div class="eyebrow">ต้นแบบ · Talking Portrait</div>
       <h1>สตูดิโอใบหน้าพูดได้</h1>
     </div>
+    <button id="tvBtn" class="tvtoggle" aria-pressed="false">โหมดสมาร์ททีวี</button>
     <p class="lede">อัปโหลดรูปหน้าตรง วางจุดตากับปาก แล้วใส่เสียงพูด ใบหน้าจะขยับปาก กะพริบตา และขยับศีรษะตามจังหวะเสียง ทุกอย่างประมวลผลในเบราว์เซอร์นี้ ไม่มีการส่งไฟล์ออกไปไหน</p>
   </header>
+
+  <div class="tvhint" aria-hidden="true">
+    <span><kbd>▲▼◀▶</kbd> เลื่อนเลือก</span><span><kbd>OK</kbd> กดเลือก</span><span><kbd>◀▶</kbd> บนแถบเลื่อน ปรับค่า</span>
+    <span><kbd>▶❚❚</kbd> เล่น/หยุด</span><span><kbd>Back</kbd> ย้อนกลับ</span><span>ปรับจุดใบหน้า: <kbd>OK</kbd> ไปจุดถัดไป</span>
+  </div>
 
   <section class="work">
     <div class="stage" id="stage">
@@ -712,6 +745,90 @@ function meters(){
 function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;t+=dt;step(dt);draw();if((frameN++%3)===0)meters();requestAnimationFrame(frame);}
 
 useDemo();fit();requestAnimationFrame(frame);
+
+/* ---------- Smart TV mode: auto-detect, D-pad spatial navigation, remote keys ---------- */
+(function(){
+  const root=document.documentElement;
+  const UA=navigator.userAgent||'';
+  const isTVUA=/SMART-TV|SmartTV|Tizen|Web0S|WebOS|NetCast|HbbTV|BRAVIA|Android TV|GoogleTV|AFT[A-Z]|CrKey|Roku|VIDAA|Hisense|PhilipsTV|TPV|Opera TV|Viera/i.test(UA);
+  const q=new URLSearchParams(location.search).get('tv');
+  let saved=null;try{saved=localStorage.getItem('tp-tv');}catch(e){}
+  const btn=document.getElementById('tvBtn');
+  function setTV(on,persist){root.classList.toggle('tv',on);btn.setAttribute('aria-pressed',String(on));btn.textContent=on?'ออกจากโหมดทีวี':'โหมดสมาร์ททีวี';
+    if(persist){try{localStorage.setItem('tp-tv',on?'1':'0');}catch(e){}}
+    if(on&&(!document.activeElement||document.activeElement===document.body))focusFirst();}
+  btn.addEventListener('click',()=>setTV(!root.classList.contains('tv'),true));
+  const isTV=()=>root.classList.contains('tv');
+
+  const SEL='button:not([disabled]),select,textarea,input[type=range],label.drop,[tabindex]:not([tabindex="-1"])';
+  document.querySelectorAll('label.drop').forEach(l=>{l.tabIndex=0;l.querySelector('input').tabIndex=-1;
+    l.addEventListener('keydown',e=>{if(isTV()&&(e.key==='Enter'||e.key===' ')){e.preventDefault();l.querySelector('input').click();}});});
+
+  function visible(el){if(el.closest('[hidden]'))return false;const r=el.getBoundingClientRect();if(!r.width||!r.height)return false;
+    const cs=getComputedStyle(el);return cs.visibility!=='hidden'&&cs.display!=='none';}
+  function candidates(){return [...document.querySelectorAll(SEL)].filter(el=>!el.closest('.pins')||stage.classList.contains('editing')).filter(visible);}
+  function mark(el){document.querySelectorAll('.tv-focus').forEach(x=>x.classList.remove('tv-focus'));if(el&&el!==document.body)el.classList.add('tv-focus');}
+  function go(el){if(!el)return;el.focus({preventScroll:true});el.scrollIntoView({block:'nearest',inline:'nearest'});mark(el);}
+  function focusFirst(){go(document.getElementById('speakBtn')||candidates()[0]);}
+  document.addEventListener('focusin',e=>{if(isTV())mark(e.target);});
+
+  function move(dir){const cur=document.activeElement;const list=candidates();
+    if(!cur||cur===document.body||!list.includes(cur)){focusFirst();return;}
+    const a=cur.getBoundingClientRect(),ax=a.left+a.width/2,ay=a.top+a.height/2;let best=null,bs=Infinity;
+    for(const el of list){if(el===cur)continue;const b=el.getBoundingClientRect(),bx=b.left+b.width/2,by=b.top+b.height/2;
+      let main,cross;
+      if(dir==='left'){if(b.right>a.left+2)continue;main=a.left-b.right;cross=Math.abs(by-ay);}
+      else if(dir==='right'){if(b.left<a.right-2)continue;main=b.left-a.right;cross=Math.abs(by-ay);}
+      else if(dir==='up'){if(b.bottom>a.top+2)continue;main=a.top-b.bottom;cross=Math.abs(bx-ax);}
+      else{if(b.top<a.bottom-2)continue;main=b.top-a.bottom;cross=Math.abs(bx-ax);}
+      const sc=Math.max(0,main)+cross*2.2;if(sc<bs){bs=sc;best=el;}}
+    if(best)go(best);}
+
+  const BACK=new Set([8,27,461,10009,166,4]);   // Backspace, Esc, webOS, Tizen, Android TV back
+  const PLAYPAUSE=new Set([179,415,19,10252]);  // MediaPlayPause, Play, Pause
+  const STOP=new Set([178,413]);
+  // Register Tizen media keys when available
+  try{if(window.tizen&&tizen.tvinputdevice)['MediaPlayPause','MediaPlay','MediaPause','MediaStop','ColorF0Red'].forEach(k=>{try{tizen.tvinputdevice.registerKey(k);}catch(e){}});}catch(e){}
+
+  function togglePlay(){if(mode!=='idle'){stopAll();return;}
+    if(activeVoice&&!activeVoice.error)playActive();else $('speakBtn').click();}
+
+  document.addEventListener('keydown',e=>{if(!isTV())return;
+    const t=document.activeElement,kc=e.keyCode,k=e.key;
+    const typing=t&&(t.tagName==='TEXTAREA'||(t.tagName==='INPUT'&&t.type!=='range'));
+    if(PLAYPAUSE.has(kc)||k==='MediaPlayPause'||k==='MediaPlay'||k==='MediaPause'){e.preventDefault();togglePlay();return;}
+    if(STOP.has(kc)||k==='MediaStop'){e.preventDefault();stopAll();return;}
+    if(BACK.has(kc)||k==='GoBack'||k==='BrowserBack'){
+      if(kc===8&&typing)return;
+      e.preventDefault();
+      if(typing){t.blur();go(t);return;}
+      if(editing){setEditing(false);go($('editBtn'));return;}
+      if(mode!=='idle'){stopAll();return;}
+      return;}
+    // Pins in edit mode: arrows nudge (handled by pin), OK moves to next pin / finishes
+    if(t&&t.classList&&t.classList.contains('pin')){
+      if(k==='Enter'){e.preventDefault();const order=['eyeL','eyeR','mouth'];const i=order.indexOf(t.dataset.key);
+        if(i<2)go(document.querySelector('.pin[data-key="'+order[i+1]+'"]'));else{setEditing(false);go($('editBtn'));}}
+      return;}
+    if(typing){if(k==='ArrowUp'||kc===38){e.preventDefault();move('up');}
+      else if(k==='ArrowDown'||kc===40){e.preventDefault();move('down');}
+      return;}
+    const range=t&&t.type==='range';
+    const sel=t&&t.tagName==='SELECT';
+    const dirs={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down'};
+    const d=dirs[k]||({37:'left',39:'right',38:'up',40:'down'})[kc];
+    if(!d)return;
+    if(range&&(d==='left'||d==='right'))return;       // native slider adjust
+    if(sel&&(d==='up'||d==='down')&&e.altKey)return;
+    e.preventDefault();move(d);
+  },true);
+
+  // Jump to first pin when entering edit mode on TV
+  $('editBtn').addEventListener('click',()=>{if(isTV()&&editing)setTimeout(()=>go(document.querySelector('.pin[data-key="eyeL"]')),0);});
+
+  setTV(q==='1'||(q!=='0'&&(saved==='1'||(saved===null&&isTVUA))),q!==null);
+  if(isTV())setTimeout(focusFirst,300);
+})();
 })();
 </script>
 
