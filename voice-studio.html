@@ -383,7 +383,7 @@ function makeCapture(host,color,onBuffer){
       <button class="recbtn" aria-label="อัดเสียง"><span class="dot"></span></button>
       <div style="flex:1;min-width:0"><div class="wavebox"><canvas style="height:84px"></canvas><div class="meta"><span class="st">แตะปุ่มแดงเพื่ออัดเสียง</span><span class="tm">00:00</span></div></div></div>
     </div>
-    <div class="row"><label class="btn small cap hide" style="cursor:pointer">🎙 อัดด้วยแอพอัดเสียง<input type="file" class="fa" accept="audio/*" capture hidden></label><label class="btn small cap hide" style="cursor:pointer">🎥 อัดวิดีโอแล้วใช้เสียง<input type="file" class="fv" accept="video/*" capture="user" hidden></label><label class="btn small" style="cursor:pointer">อัปโหลดไฟล์เสียง<input type="file" class="fu" accept="audio/*,video/*" hidden></label><input type="file" class="fany" accept="audio/*,video/*" hidden><span class="note fname"></span></div>`;
+    <div class="row"><label class="btn small cap hide" style="cursor:pointer">🎙 อัดด้วยแอพอัดเสียง<input type="file" class="fa" accept="audio/*" capture hidden></label><label class="btn small cap hide" style="cursor:pointer">🎥 อัดวิดีโอแล้วใช้เสียง<input type="file" class="fv" accept="video/*" capture="user" hidden></label><label class="btn small" style="cursor:pointer">อัปโหลดไฟล์เสียง<input type="file" class="fu" accept="audio/*,video/*" hidden></label><input type="file" class="fany" accept="audio/*,video/*" hidden><span class="note fname"></span></div><a class="btn primary ext hide" target="_blank" rel="noopener">เปิดหน้าที่อัดเสียงจากไมค์ได้ทันที ↗</a>`;
   const btn=host.querySelector('.recbtn'),cv=host.querySelector('canvas'),st=host.querySelector('.st'),tm=host.querySelector('.tm'),fileA=host.querySelector('.fa'),fileV=host.querySelector('.fv'),fileU=host.querySelector('.fu'),fileAny=host.querySelector('.fany'),fname=host.querySelector('.fname');
   let rec=null,stream=null,chunks=[],hist=[],raf=0,t0=0,an=null;const api={buffer:null,set(buf,label){api.buffer=buf;drawBarsWave(cv,peaks(buf,160),cssVar(host,'--accent'));tm.textContent=fmt(buf.duration);st.textContent=label||'พร้อมใช้งาน';onBuffer&&onBuffer(buf);}};
   api.redraw=()=>{if(rec&&rec.state==='recording')return;if(api.buffer)drawBarsWave(cv,peaks(api.buffer,160),cssVar(host,'--accent'));else drawBarsWave(cv,null,cssVar(host,'--accent-mid'));};
@@ -400,7 +400,7 @@ function makeCapture(host,color,onBuffer){
     rec.start();t0=c.currentTime;btn.classList.add('on');btn.innerHTML='<span class="sq"></span>';st.textContent='กำลังอัด… แตะอีกครั้งเพื่อหยุด';liveDraw();
   }
   let micBlocked=false;
-  function blockMic(){micBlocked=true;host.querySelectorAll('.cap').forEach(x=>x.classList.remove('hide'));st.textContent='แตะปุ่มแดง แล้วเลือกอัดวิดีโอหรืออัดเสียงจากเมนูของมือถือ';}
+  function blockMic(){micBlocked=true;const ex=host.querySelector('.ext');if(window.STUDIO_EXT_URL){ex.href=window.STUDIO_EXT_URL;ex.classList.remove('hide');}host.querySelectorAll('.cap').forEach(x=>x.classList.remove('hide'));st.textContent='แตะปุ่มแดง แล้วเลือกอัดวิดีโอหรืออัดเสียงจากเมนูของมือถือ';}
   try{const pp=document.permissionsPolicy||document.featurePolicy;if(pp&&pp.allowsFeature&&!pp.allowsFeature('microphone'))blockMic();}catch(e){}
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.MediaRecorder)blockMic();
   btn.onclick=()=>{if(rec&&rec.state==='recording')rec.stop();else if(micBlocked)fileAny.click();else start();};
