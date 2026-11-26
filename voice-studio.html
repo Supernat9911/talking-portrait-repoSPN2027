@@ -1,0 +1,736 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>สตูดิโอเสียง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+:root{
+  --bg:#F2F4F9; --card:#FFFFFF; --ink:#141A2E; --muted:#69708C; --line:#E3E6EF; --soft:#F6F7FB;
+  --blue:#3557D4; --blue-soft:#E9EEFF; --blue-mid:#AFC0F5;
+  --purple:#7A4FD3; --purple-soft:#F2ECFF; --purple-mid:#CDB8F5;
+  --green:#18905F; --green-soft:#E2F5EC; --green-mid:#8FD6B5;
+  --orange:#E0610D; --orange-soft:#FFF0E4; --orange-mid:#F7BE96;
+  --danger:#D23B3B;
+  --shadow:0 8px 28px rgba(32,44,98,.08);
+  --font:"IBM Plex Sans Thai",system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1220; --card:#181C2E; --ink:#E7EAF5; --muted:#9AA1BE; --line:#2A3048; --soft:#1F2438;
+  --blue:#7E99FF; --blue-soft:#1E2747; --blue-mid:#3C4F8F;
+  --purple:#B193FF; --purple-soft:#2A2145; --purple-mid:#5A4590;
+  --green:#4CCB92; --green-soft:#16302A; --green-mid:#2D6E52;
+  --orange:#FF9550; --orange-soft:#38251A; --orange-mid:#7C4A2A;
+  --shadow:0 8px 28px rgba(0,0,0,.35); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1220; --card:#181C2E; --ink:#E7EAF5; --muted:#9AA1BE; --line:#2A3048; --soft:#1F2438;
+  --blue:#7E99FF; --blue-soft:#1E2747; --blue-mid:#3C4F8F;
+  --purple:#B193FF; --purple-soft:#2A2145; --purple-mid:#5A4590;
+  --green:#4CCB92; --green-soft:#16302A; --green-mid:#2D6E52;
+  --orange:#FF9550; --orange-soft:#38251A; --orange-mid:#7C4A2A;
+  --shadow:0 8px 28px rgba(0,0,0,.35); color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;padding-bottom:96px;
+  background-image:radial-gradient(var(--line) 1px,transparent 1px);background-size:22px 22px}
+button,input,select,textarea{font:inherit;color:inherit}
+.page{max-width:960px;margin:0 auto;padding:20px 16px 24px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--blue);background:var(--blue-soft);padding:4px 12px;border-radius:999px}
+h1{font-size:clamp(26px,6vw,36px);line-height:1.2;margin:10px 0 2px;font-weight:700;letter-spacing:-.01em}
+.sub{margin:0;color:var(--muted)}
+.sub b{color:var(--blue);font-weight:600}
+.top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:18px}
+.top-actions{display:flex;gap:8px;flex-wrap:wrap}
+.card{background:var(--card);border-radius:20px;box-shadow:var(--shadow);border:1px solid var(--line)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:8px 14px;font-weight:600;cursor:pointer;min-height:40px;white-space:nowrap}
+.btn:hover{background:var(--soft)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent,var(--blue));border-color:transparent;color:#fff}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.small{min-height:32px;padding:4px 10px;font-size:13px;border-radius:10px}
+.btn.danger{color:var(--danger)}
+:root .t0{--accent:var(--blue);--accent-soft:var(--blue-soft);--accent-mid:var(--blue-mid)}
+:root .t1{--accent:var(--purple);--accent-soft:var(--purple-soft);--accent-mid:var(--purple-mid)}
+:root .t2{--accent:var(--green);--accent-soft:var(--green-soft);--accent-mid:var(--green-mid)}
+:root .t3{--accent:var(--orange);--accent-soft:var(--orange-soft);--accent-mid:var(--orange-mid)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn.primary{color:#0F1220}}
+:root[data-theme="dark"] .btn.primary{color:#0F1220}
+
+/* tabs */
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.tab{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:16px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-weight:600;font-size:14px;text-align:center}
+.tab .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.tab[aria-selected="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.panel{padding:18px;display:none}
+.panel.on{display:block}
+.phead{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.phead .ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);flex:none}
+.phead h2{margin:0;font-size:19px}
+.phead p{margin:0;color:var(--muted);font-size:13px}
+svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.seg{display:inline-flex;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:3px;gap:2px;margin-bottom:12px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;border-radius:9px;padding:6px 12px;font-weight:600;font-size:14px;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.stack{display:flex;flex-direction:column;gap:12px}
+.label{font-size:13px;color:var(--muted);font-weight:600}
+.prompt{display:flex;align-items:center;gap:8px;border:1.5px solid var(--accent-mid);border-radius:14px;padding:6px 6px 6px 14px;background:var(--card)}
+.prompt input{flex:1;border:0;outline:0;background:transparent;min-width:0;padding:6px 0;font-size:16px}
+.send{width:38px;height:38px;border-radius:50%;border:0;background:var(--accent);color:#fff;display:grid;place-items:center;cursor:pointer;flex:none}
+textarea,.field{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--card);font-size:16px;outline:0}
+textarea:focus,.field:focus{border-color:var(--accent-mid)}
+textarea{min-height:84px;resize:vertical}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--accent-mid);background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600;cursor:pointer}
+.chip.static{cursor:default}
+.wavebox{border:1px solid var(--line);border-radius:16px;background:var(--soft);padding:10px;position:relative}
+.wavebox canvas{display:block;width:100%;height:110px}
+.wavebox .meta{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-top:4px;font-family:var(--mono)}
+.recbtn{width:64px;height:64px;border-radius:50%;border:4px solid var(--accent-soft);background:var(--danger);cursor:pointer;display:grid;place-items:center;color:#fff;flex:none}
+.recbtn.on{animation:pulse 1.2s infinite}
+.recbtn .sq{width:18px;height:18px;border-radius:4px;background:#fff}
+.recbtn .dot{width:22px;height:22px;border-radius:50%;background:#fff}
+@keyframes pulse{50%{box-shadow:0 0 0 10px rgba(210,59,59,.15)}}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
+.vcard{border:1.5px solid var(--line);border-radius:16px;background:var(--card);padding:12px 10px;cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px}
+.vcard .em{width:48px;height:48px;border-radius:14px;background:var(--accent-soft);display:grid;place-items:center;font-size:24px}
+.vcard b{font-size:14px}
+.vcard small{color:var(--muted);font-size:12px;line-height:1.3}
+.vcard[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.sliders{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 18px}
+.sl{display:flex;flex-direction:column;gap:2px}
+.sl .top2{display:flex;justify-content:space-between;font-size:13px}
+.sl .top2 span:last-child{font-family:var(--mono);color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.toggles{display:flex;flex-wrap:wrap;gap:6px}
+.toggles label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:13px;cursor:pointer;background:var(--card)}
+.toggles input{accent-color:var(--accent)}
+.note{font-size:13px;color:var(--muted);margin:0}
+.note.warn{color:var(--orange)}
+.bars{height:150px;width:100%;display:block}
+.musicmeta{font-size:13px;color:var(--muted)}
+.hide{display:none!important}
+
+/* timeline */
+.tl-card{margin-top:16px;padding:12px 0 8px}
+.tl-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 14px 8px;flex-wrap:wrap}
+.tl-bar h3{margin:0;font-size:16px}
+.tl{display:grid;grid-template-columns:148px 1fr}
+.tl-labels{border-right:1px solid var(--line)}
+.tl-labels .sp{height:28px}
+.lane-label{height:46px;display:flex;align-items:center;gap:6px;padding:0 6px 0 12px;font-size:13px;font-weight:600}
+.lane-label .ic{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);flex:none}
+.lane-label .ic svg{width:15px;height:15px}
+.lane-label .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mute{border:0;background:transparent;cursor:pointer;color:var(--muted);padding:2px;border-radius:6px;display:grid;place-items:center}
+.mute svg{width:16px;height:16px}
+.mute[aria-pressed="true"]{color:var(--danger)}
+.tl-scroll{overflow-x:auto;overflow-y:hidden;position:relative;-webkit-overflow-scrolling:touch}
+.tl-inner{position:relative;min-width:100%}
+.ruler{height:28px;position:relative;cursor:pointer;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.tick{position:absolute;bottom:0;width:1px;background:var(--line);height:6px}
+.tick.big{height:10px;background:var(--muted)}
+.tick span{position:absolute;bottom:11px;left:3px;white-space:nowrap}
+.lane{height:46px;position:relative;cursor:pointer}
+.lane::before{content:"";position:absolute;inset:5px 0;background:var(--accent-soft);opacity:.55}
+.lane.muted::before{opacity:.15}
+.clip{position:absolute;top:7px;height:32px;border-radius:9px;background:var(--card);border:1.5px solid var(--accent-mid);overflow:hidden;cursor:grab;touch-action:none;display:flex;align-items:center;user-select:none;-webkit-user-select:none}
+.clip.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft),0 2px 8px rgba(0,0,0,.12)}
+.clip canvas{position:absolute;inset:0;width:100%;height:100%}
+.clip .cn{position:relative;margin-left:5px;font-size:11.5px;font-weight:600;color:var(--accent);background:var(--card);border:1px solid var(--accent-mid);padding:0 6px;border-radius:6px;white-space:nowrap;max-width:calc(100% - 10px);overflow:hidden;text-overflow:ellipsis}
+.lane.muted .clip{opacity:.4}
+.playhead{position:absolute;top:0;bottom:0;width:2px;background:var(--blue);pointer-events:none;z-index:5}
+.playhead span{position:absolute;top:2px;left:50%;transform:translateX(-50%);background:var(--blue-soft);color:var(--blue);border:1px solid var(--blue-mid);font:600 11px var(--mono);padding:1px 6px;border-radius:6px;white-space:nowrap}
+.empty-hint{padding:4px 14px 6px;font-size:13px;color:var(--muted)}
+.selbar{margin:8px 14px 4px;padding:10px 12px;border-radius:14px;background:var(--soft);border:1px solid var(--line);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.selbar b{font-size:14px}
+.selbar .vol{display:flex;align-items:center;gap:6px;font-size:13px;flex:1;min-width:160px;white-space:nowrap}
+
+/* transport */
+.transport{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);width:min(940px,calc(100% - 24px));background:rgba(28,32,52,.92);color:#fff;border-radius:999px;padding:8px 10px 8px 8px;display:flex;align-items:center;gap:10px;z-index:20;box-shadow:0 10px 30px rgba(0,0,0,.25);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.transport .pp{width:46px;height:46px;border-radius:50%;border:0;background:#fff;color:#1C2034;display:grid;place-items:center;cursor:pointer;flex:none}
+.transport .pp svg{width:22px;height:22px;fill:currentColor;stroke:none}
+.transport .times{display:flex;flex-direction:column;flex:1;min-width:0;gap:5px}
+.transport .tt{display:flex;justify-content:space-between;font:500 13px var(--mono)}
+.prog{height:8px;border-radius:99px;background:rgba(255,255,255,.22);position:relative;cursor:pointer}
+.prog i{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:#fff;width:0}
+.transport .tbtn{border:0;background:rgba(255,255,255,.14);color:#fff;border-radius:999px;padding:0 14px;height:40px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;flex:none}
+.transport .tbtn svg{width:18px;height:18px}
+.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;transition:.25s;z-index:30;max-width:calc(100% - 32px);pointer-events:none}
+.toast.on{opacity:1;transform:translateX(-50%)}
+footer{margin-top:18px;font-size:13px;color:var(--muted)}
+footer a{color:var(--blue)}
+@media (max-width:560px){
+  .tabs{gap:6px}.tab{font-size:12.5px;padding:8px 2px}
+  .tl{grid-template-columns:86px 1fr}
+  .lane-label{padding-left:8px;font-size:12px}
+  .lane-label .ic{display:none}
+  .transport .tbtn .tx{display:none}
+  .transport .tbtn{padding:0 12px}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></symbol>
+  <symbol id="i-people" viewBox="0 0 24 24"><circle cx="8" cy="9" r="3"/><circle cx="16.5" cy="7.5" r="2.5"/><path d="M3 19c.6-3 2.6-5 5-5s4.4 2 5 5M14 13.5c.8-.4 1.6-.5 2.5-.5 2.2 0 3.8 1.6 4.4 4"/></symbol>
+  <symbol id="i-music" viewBox="0 0 24 24"><path d="M4 6h10M4 11h10M4 16h6M18 4v11"/><circle cx="16" cy="16" r="2.5"/></symbol>
+  <symbol id="i-fx" viewBox="0 0 24 24"><path d="M9 9l11 4-5 2-2 5z"/><path d="M5 3l1 2M3 7l2 .5M8 2.5V5"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-vol" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4zM17 9a4 4 0 0 1 0 6"/></symbol>
+  <symbol id="i-muted" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4zM17 9l4 6M21 9l-4 6"/></symbol>
+</svg>
+
+<div class="page">
+  <header class="top">
+    <div>
+      <span class="pill"><svg class="i" style="width:16px;height:16px"><use href="#i-mic"/></svg>สร้างเสียงได้หลายแบบ</span>
+      <h1>สตูดิโอเสียง</h1>
+      <p class="sub"><b>เสียงพากย์ · เสียงคนอื่น · เพลง · เอฟเฟกต์</b> รวมไว้ในไทม์ไลน์เดียว</p>
+    </div>
+    <div class="top-actions">
+      <button class="btn" id="demoBtn">โหลดตัวอย่าง</button>
+      <a class="btn" href="index.html">ใบหน้าพูดได้ →</a>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab t0" role="tab" aria-selected="true" data-p="0"><span class="ic"><svg class="i"><use href="#i-mic"/></svg></span>เสียงพากย์</button>
+    <button class="tab t1" role="tab" aria-selected="false" data-p="1"><span class="ic"><svg class="i"><use href="#i-people"/></svg></span>เสียงคนอื่น</button>
+    <button class="tab t2" role="tab" aria-selected="false" data-p="2"><span class="ic"><svg class="i"><use href="#i-music"/></svg></span>เพลง</button>
+    <button class="tab t3" role="tab" aria-selected="false" data-p="3"><span class="ic"><svg class="i"><use href="#i-fx"/></svg></span>เอฟเฟกต์</button>
+  </nav>
+
+  <!-- 0: narration -->
+  <section class="card panel t0 on" id="p0">
+    <div class="phead"><span class="ic"><svg class="i"><use href="#i-mic"/></svg></span>
+      <div><h2>เสียงพากย์หลัก</h2><p>อัดเสียงตัวเอง อัปโหลดคลิป หรือพิมพ์ให้เครื่องอ่าน</p></div></div>
+    <div class="seg" id="nMode">
+      <button aria-pressed="true" data-m="rec">อัดเสียง</button>
+      <button aria-pressed="false" data-m="tts">พิมพ์ให้อ่าน</button>
+    </div>
+    <div id="nRec" class="stack"></div>
+    <div id="nTts" class="stack hide">
+      <textarea id="nText" placeholder="พิมพ์ข้อความที่อยากให้พากย์ เช่น สวัสดีครับ วันนี้จะพาไปดูวิธีทำเสียงให้คลิป"></textarea>
+      <div class="sliders">
+        <div class="sl"><div class="top2"><span>ภาษา</span><span></span></div>
+          <select class="field" id="nLang"><option value="th-TH">ไทย</option><option value="en-US">English</option></select></div>
+        <div class="sl"><div class="top2"><span>ความเร็ว</span><span id="nRateV">1.00×</span></div><input type="range" id="nRate" min="0.6" max="1.6" step="0.05" value="1"></div>
+      </div>
+      <div class="row"><button class="btn" id="nSay">▶ ลองฟัง</button><button class="btn primary" id="nAddTts">เพิ่มลงไทม์ไลน์</button></div>
+      <p class="note" id="ttsNote">ใช้เสียงสังเคราะห์ที่ติดตั้งในเครื่อง คลิปแบบนี้เล่นในไทม์ไลน์ได้ แต่ไม่รวมอยู่ในไฟล์ WAV ตอนบันทึก</p>
+    </div>
+  </section>
+
+  <!-- 1: other voices -->
+  <section class="card panel t1" id="p1">
+    <div class="phead"><span class="ic"><svg class="i"><use href="#i-people"/></svg></span>
+      <div><h2>เปลี่ยนคนเล่าได้หลายคน</h2><p>เลือกเสียงจากคลัง หรือพิมพ์บอกลักษณะเสียงที่อยากได้</p></div></div>
+    <div class="seg" id="vSrc">
+      <button aria-pressed="true" data-m="lib">จากคลัง</button>
+      <button aria-pressed="false" data-m="design">ออกแบบเอง</button>
+    </div>
+    <div id="vDesign" class="stack hide" style="margin-bottom:12px">
+      <input class="field" id="vName" placeholder="ชื่อเสียง เช่น ป้าศรี" maxlength="20">
+      <div class="prompt"><input id="vDesc" placeholder="บอกลักษณะเสียง เช่น ป้าแม่ค้า เสียงแหลม พูดเร็ว"><button class="send" id="vDesignBtn" aria-label="ออกแบบเสียง"><svg class="i"><use href="#i-send"/></svg></button></div>
+      <div class="chips" id="vDescChips"></div>
+    </div>
+    <div class="cards" id="vCards"></div>
+    <div class="stack" style="margin-top:14px">
+      <div class="label">ปรับเสียง <span id="vSelName"></span></div>
+      <div class="chips" id="vTags"></div>
+      <div class="sliders">
+        <div class="sl"><div class="top2"><span>ระดับเสียง</span><span id="vSemisV">0</span></div><input type="range" id="vSemis" min="-12" max="12" step="1" value="0"></div>
+        <div class="sl"><div class="top2"><span>โทน (ทุ้ม ↔ ใส)</span><span id="vToneV">0</span></div><input type="range" id="vTone" min="-1" max="1" step="0.1" value="0"></div>
+        <div class="sl"><div class="top2"><span>ความเร็ว</span><span id="vSpeedV">1.00×</span></div><input type="range" id="vSpeed" min="0.7" max="1.4" step="0.02" value="1"></div>
+      </div>
+      <div class="toggles">
+        <label><input type="checkbox" id="vRobot"> หุ่นยนต์</label>
+        <label><input type="checkbox" id="vEcho"> ก้อง</label>
+        <label><input type="checkbox" id="vPhone"> โทรศัพท์/วิทยุ</label>
+        <label><input type="checkbox" id="vShaky"> เสียงสั่น</label>
+      </div>
+      <div class="label" style="margin-top:4px">ให้พูดอะไร</div>
+      <div class="seg" id="vMode" style="margin-bottom:0">
+        <button aria-pressed="true" data-m="rec">แปลงจากเสียงอัด</button>
+        <button aria-pressed="false" data-m="tts">พิมพ์ให้อ่าน</button>
+      </div>
+      <div id="vRecWrap" class="stack"></div>
+      <div id="vTtsWrap" class="stack hide">
+        <textarea id="vText" placeholder="หรือเสียงป้าแม่ค้าก็ได้จ้า"></textarea>
+        <p class="note">อ่านด้วยเสียงสังเคราะห์ของเครื่อง ใช้ได้เฉพาะระดับเสียงและความเร็ว เอฟเฟกต์ หุ่นยนต์ ก้อง และโทรศัพท์ใช้กับเสียงอัดเท่านั้น</p>
+      </div>
+      <div class="row"><button class="btn" id="vPreview">▶ ลองฟัง</button><button class="btn primary" id="vAdd">เพิ่มลงไทม์ไลน์</button></div>
+      <p class="note">ใช้เสียงของตัวเอง หรือของคนที่ยินยอมแล้วเท่านั้น</p>
+    </div>
+  </section>
+
+  <!-- 2: music -->
+  <section class="card panel t2" id="p2">
+    <div class="phead"><span class="ic"><svg class="i"><use href="#i-music"/></svg></span>
+      <div><h2>บอกแบบเพลงที่อยากได้</h2><p>แต่งเพลงประกอบจากคำบรรยายทันที</p></div></div>
+    <div class="stack">
+      <div class="prompt"><input id="mPrompt" placeholder="บอกแบบเพลงที่อยากได้… เช่น เพลงเปิดตัวโปรเจกต์ สดใส"><button class="send" id="mGo" aria-label="แต่งเพลง"><svg class="i"><use href="#i-send"/></svg></button></div>
+      <div class="chips" id="mChips"></div>
+      <div class="wavebox"><canvas class="bars" id="mBars"></canvas></div>
+      <div class="row" style="justify-content:space-between">
+        <span class="musicmeta" id="mMeta">ยังไม่มีเพลง</span>
+        <label class="row" style="font-size:13px;gap:6px">ยาว <select class="field" id="mLen" style="width:auto;padding:4px 8px;font-size:14px"><option>8</option><option selected>16</option><option>30</option><option>60</option></select> วินาที</label>
+      </div>
+      <div class="row"><button class="btn" id="mPlay" disabled>▶ ฟัง</button><button class="btn" id="mAgain" disabled>แต่งใหม่</button><button class="btn primary" id="mAdd" disabled>เพิ่มลงไทม์ไลน์</button></div>
+    </div>
+  </section>
+
+  <!-- 3: sfx -->
+  <section class="card panel t3" id="p3">
+    <div class="phead"><span class="ic"><svg class="i"><use href="#i-fx"/></svg></span>
+      <div><h2>พิมพ์บอกเสียงเอฟเฟกต์</h2><p>คลิก · วูบ · ปรบมือ และอีกหลายเสียง</p></div></div>
+    <div class="stack">
+      <div class="prompt"><input id="fxPrompt" placeholder="เช่น เสียงวูบ, เสียงเคาะประตู, เสียงฝนตก"><button class="send" id="fxGo" aria-label="สร้างเอฟเฟกต์"><svg class="i"><use href="#i-send"/></svg></button></div>
+      <div class="cards" id="fxCards"></div>
+      <p class="note" id="fxNote">แตะการ์ดเพื่อฟัง แล้วกดเพิ่มลงไทม์ไลน์</p>
+      <div class="row"><button class="btn primary" id="fxAdd" disabled>เพิ่มลงไทม์ไลน์</button></div>
+    </div>
+  </section>
+
+  <!-- timeline -->
+  <section class="card tl-card">
+    <div class="tl-bar">
+      <h3>ไทม์ไลน์</h3>
+      <div class="row">
+        <button class="btn small" id="zoomOut" aria-label="ย่อ">−</button>
+        <button class="btn small" id="zoomIn" aria-label="ขยาย">+</button>
+        <button class="btn small danger" id="clearAll">ล้างทั้งหมด</button>
+      </div>
+    </div>
+    <div class="tl">
+      <div class="tl-labels" id="labels"><div class="sp"></div></div>
+      <div class="tl-scroll" id="tlScroll"><div class="tl-inner" id="tlInner">
+        <div class="ruler" id="ruler"></div>
+        <div class="playhead" id="ph"><span id="phLabel">0:00</span></div>
+      </div></div>
+    </div>
+    <div class="empty-hint" id="emptyHint">ยังไม่มีคลิป สร้างเสียงจากแท็บด้านบน แล้วกด “เพิ่มลงไทม์ไลน์” คลิปจะวางที่เส้นสีน้ำเงิน แตะไม้บรรทัดเพื่อย้ายเส้น ลากคลิปเพื่อเลื่อนตำแหน่ง</div>
+    <div class="selbar hide" id="selbar">
+      <b id="selName"></b>
+      <div class="vol">ความดัง <input type="range" id="selVol" min="0" max="1.5" step="0.05"></div>
+      <button class="btn small" id="selPlay">▶ ฟัง</button>
+      <button class="btn small" id="selDup">ทำซ้ำ</button>
+      <button class="btn small danger" id="selDel">ลบ</button>
+    </div>
+  </section>
+
+  <footer>ทุกเสียงสร้างและประมวลผลในเบราว์เซอร์นี้ ไม่มีการส่งไฟล์ออกไปไหน เพลงและเอฟเฟกต์สร้างด้วยเครื่องสังเคราะห์เสียง ไม่ได้ใช้โมเดล AI</footer>
+</div>
+
+<div class="transport">
+  <button class="pp" id="playBtn" aria-label="เล่น"><svg><use href="#i-play" id="ppUse"/></svg></button>
+  <div class="times">
+    <div class="tt"><span id="tNow">00:00.00</span><span id="tEnd">00:00</span></div>
+    <div class="prog" id="prog"><i id="progFill"></i></div>
+  </div>
+  <button class="tbtn" id="exportBtn"><svg class="i"><use href="#i-down"/></svg><span class="tx">บันทึก WAV</span></button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ---------- basics ---------- */
+const $=s=>document.querySelector(s);
+const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;
+const SR=44100;
+let actx=null;
+function ac(){if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume();return actx;}
+function rng(seed){let a=seed>>>0;return()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
+function hash(s){let h=2166136261;for(const c of s){h^=c.codePointAt(0);h=Math.imul(h,16777619);}return h>>>0;}
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+function fmt(t,cs=true){t=Math.max(0,t);const m=Math.floor(t/60),s=t-m*60;return String(m).padStart(2,'0')+':'+(cs?s.toFixed(2).padStart(5,'0'):String(Math.floor(s)).padStart(2,'0'));}
+function fmtShort(t){const m=Math.floor(t/60),s=Math.floor(t%60);return m+':'+String(s).padStart(2,'0');}
+let toastT;function toast(msg){const el=$('#toast');el.textContent=msg;el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),2600);}
+function cssVar(el,name){return getComputedStyle(el).getPropertyValue(name).trim();}
+function normalize(buf,peak=.9){let m=0;for(let c=0;c<buf.numberOfChannels;c++){const d=buf.getChannelData(c);for(let i=0;i<d.length;i++){const a=Math.abs(d[i]);if(a>m)m=a;}}if(m<1e-6)return buf;const k=peak/m;for(let c=0;c<buf.numberOfChannels;c++){const d=buf.getChannelData(c);for(let i=0;i<d.length;i++)d[i]*=k;}return buf;}
+function toMono(buf){const n=buf.length,out=new Float32Array(n);for(let c=0;c<buf.numberOfChannels;c++){const d=buf.getChannelData(c);for(let i=0;i<n;i++)out[i]+=d[i]/buf.numberOfChannels;}return out;}
+function peaks(buf,n){const d=toMono(buf),out=new Float32Array(n),step=d.length/n;let m=0;for(let i=0;i<n;i++){let p=0;const a=Math.floor(i*step),b=Math.min(d.length,Math.floor((i+1)*step));for(let j=a;j<b;j+=2){const v=Math.abs(d[j]);if(v>p)p=v;}out[i]=p;if(p>m)m=p;}if(m>0)for(let i=0;i<n;i++)out[i]/=m;return out;}
+function fitCanvas(cv){const r=cv.getBoundingClientRect(),dpr=window.devicePixelRatio||1;cv.width=Math.max(1,Math.round(r.width*dpr));cv.height=Math.max(1,Math.round(r.height*dpr));const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);return [g,r.width,r.height];}
+function drawBarsWave(cv,pk,color,gap=4,bw=2.5){const [g,w,h]=fitCanvas(cv);g.clearRect(0,0,w,h);g.fillStyle=color;const n=Math.max(1,Math.floor(w/gap));for(let i=0;i<n;i++){const v=pk?pk[Math.floor(i/n*pk.length)]:0;const bh=Math.max(2,v*h*.9);g.globalAlpha=v>.05?1:.45;g.fillRect(i*gap,(h-bh)/2,bw,bh);}g.globalAlpha=1;}
+
+/* ---------- preview player ---------- */
+let pv=null;
+function stopPreview(){if(pv){try{pv.src.stop()}catch(e){}pv=null;}speechSynthesis.cancel();}
+function previewBuffer(buf,onEnd){stopPreview();stopTransport();const c=ac();const src=c.createBufferSource();src.buffer=buf;const an=c.createAnalyser();an.fftSize=256;src.connect(an);an.connect(c.destination);src.start();const me={src,an,t0:c.currentTime,buf};pv=me;src.onended=()=>{if(pv===me)pv=null;onEnd&&onEnd();};return me;}
+
+/* ---------- speech synthesis ---------- */
+function pickVoice(lang){const vs=speechSynthesis.getVoices();const p=lang.slice(0,2);return vs.find(v=>v.lang&&v.lang.replace('_','-').toLowerCase().startsWith(p))||null;}
+function speak(t,onEnd){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t.text);u.lang=t.lang;const v=pickVoice(t.lang);if(v)u.voice=v;u.pitch=clamp(t.pitch,0,2);u.rate=clamp(t.rate,.5,2);u.volume=clamp(t.gain??1,0,1);if(onEnd)u.onend=onEnd;speechSynthesis.speak(u);}
+function ttsDur(text,rate){return Math.max(1,[...text].length*0.075/rate+.4);}
+function checkThaiVoice(){if(!('speechSynthesis' in window)){$('#ttsNote').textContent='เบราว์เซอร์นี้ไม่มีเสียงสังเคราะห์';return;}const v=pickVoice('th-TH');if(!v&&speechSynthesis.getVoices().length){$('#ttsNote').classList.add('warn');$('#ttsNote').textContent='เครื่องนี้ยังไม่มีเสียงภาษาไทย ถ้าอ่านไม่ออก ให้ติดตั้งเสียงไทยในการตั้งค่าระบบ คลิปแบบนี้ไม่รวมอยู่ในไฟล์ WAV';}}
+if('speechSynthesis' in window){speechSynthesis.onvoiceschanged=checkThaiVoice;setTimeout(checkThaiVoice,600);}
+
+/* ---------- recorder widget ---------- */
+function makeCapture(host,color,onBuffer){
+  host.innerHTML=`<div class="row" style="gap:14px;flex-wrap:nowrap">
+      <button class="recbtn" aria-label="อัดเสียง"><span class="dot"></span></button>
+      <div style="flex:1;min-width:0"><div class="wavebox"><canvas style="height:84px"></canvas><div class="meta"><span class="st">แตะปุ่มแดงเพื่ออัดเสียง</span><span class="tm">00:00</span></div></div></div>
+    </div>
+    <div class="row"><label class="btn small" style="cursor:pointer">อัปโหลดไฟล์เสียง<input type="file" accept="audio/*" hidden></label><span class="note fname"></span></div>`;
+  const btn=host.querySelector('.recbtn'),cv=host.querySelector('canvas'),st=host.querySelector('.st'),tm=host.querySelector('.tm'),file=host.querySelector('input[type=file]'),fname=host.querySelector('.fname');
+  let rec=null,stream=null,chunks=[],hist=[],raf=0,t0=0,an=null;const api={buffer:null,set(buf,label){api.buffer=buf;drawBarsWave(cv,peaks(buf,160),cssVar(host,'--accent'));tm.textContent=fmt(buf.duration);st.textContent=label||'พร้อมใช้งาน';onBuffer&&onBuffer(buf);}};
+  drawBarsWave(cv,null,cssVar(host,'--accent-mid'));
+  function liveDraw(){const d=new Uint8Array(an.fftSize);an.getByteTimeDomainData(d);let s=0;for(const x of d){const v=(x-128)/128;s+=v*v;}hist.push(Math.min(1,Math.sqrt(s/d.length)*4));const [g,w,h]=fitCanvas(cv);g.clearRect(0,0,w,h);g.fillStyle=cssVar(host,'--accent');const n=Math.floor(w/4),start=Math.max(0,hist.length-n);for(let i=start;i<hist.length;i++){const bh=Math.max(2,hist[i]*h*.9);g.fillRect((i-start)*4,(h-bh)/2,2.5,bh);}tm.textContent=fmt(ac().currentTime-t0);raf=requestAnimationFrame(liveDraw);}
+  async function start(){
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){toast('เบราว์เซอร์นี้อัดเสียงไม่ได้ ลองอัปโหลดไฟล์แทน');return;}
+    stopPreview();
+    try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});}catch(e){toast('เปิดไมโครโฟนไม่ได้ กรุณาอนุญาตการใช้ไมค์');return;}
+    const c=ac();const srcN=c.createMediaStreamSource(stream);an=c.createAnalyser();an.fftSize=1024;srcN.connect(an);
+    chunks=[];hist=[];rec=new MediaRecorder(stream);rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
+    rec.onstop=async()=>{cancelAnimationFrame(raf);stream.getTracks().forEach(t=>t.stop());btn.classList.remove('on');btn.innerHTML='<span class="dot"></span>';
+      try{const ab=await new Blob(chunks,{type:rec.mimeType}).arrayBuffer();const buf=await ac().decodeAudioData(ab);api.set(buf,'อัดเสร็จแล้ว');fname.textContent='';}catch(e){st.textContent='อ่านเสียงที่อัดไม่ได้';}};
+    rec.start();t0=c.currentTime;btn.classList.add('on');btn.innerHTML='<span class="sq"></span>';st.textContent='กำลังอัด… แตะอีกครั้งเพื่อหยุด';liveDraw();
+  }
+  btn.onclick=()=>{if(rec&&rec.state==='recording')rec.stop();else start();};
+  file.onchange=async()=>{const f=file.files[0];if(!f)return;try{const buf=await ac().decodeAudioData(await f.arrayBuffer());fname.textContent=f.name;api.set(buf,'โหลดไฟล์แล้ว');}catch(e){toast('เปิดไฟล์เสียงนี้ไม่ได้');}file.value='';};
+  return api;
+}
+
+/* ---------- voice transform ---------- */
+function pitchShiftArr(x,ratio){const N=2048,hop=512,out=new Float32Array(x.length),norm=1.5;const w=new Float32Array(N);for(let i=0;i<N;i++)w[i]=.5-.5*Math.cos(2*Math.PI*i/N);
+  for(let pos=-N/2;pos<x.length;pos+=hop){for(let i=0;i<N;i++){const o=pos+i;if(o<0||o>=out.length)continue;const s=pos+N/2-N/2*ratio+i*ratio;const i0=Math.floor(s);if(i0<0||i0+1>=x.length)continue;const f=s-i0;out[o]+=(x[i0]*(1-f)+x[i0+1]*f)*w[i]/norm;}}return out;}
+function resampleArr(x,speed){const n=Math.floor(x.length/speed),out=new Float32Array(n);for(let i=0;i<n;i++){const s=i*speed,i0=Math.floor(s),f=s-i0;out[i]=x[i0]*(1-f)+(x[i0+1]||0)*f;}return out;}
+async function transformVoice(buf,p){
+  const sr=buf.sampleRate;let x=toMono(buf);
+  const shift=p.semis-12*Math.log2(p.speed);
+  if(Math.abs(shift)>.05)x=pitchShiftArr(x,2**(shift/12));
+  if(Math.abs(p.speed-1)>.01)x=resampleArr(x,p.speed);
+  const tail=p.echo?1.4:.05;const oc=new OAC(1,Math.ceil(x.length+tail*sr),sr);
+  const b=oc.createBuffer(1,x.length,sr);b.getChannelData(0).set(x);
+  const s=oc.createBufferSource();s.buffer=b;
+  const ls=oc.createBiquadFilter();ls.type='lowshelf';ls.frequency.value=250;ls.gain.value=-p.tone*7;
+  const hs=oc.createBiquadFilter();hs.type='highshelf';hs.frequency.value=2800;hs.gain.value=p.tone*8;
+  s.connect(ls);ls.connect(hs);let node=hs;
+  if(p.phone){const hp=oc.createBiquadFilter();hp.type='highpass';hp.frequency.value=450;const lp=oc.createBiquadFilter();lp.type='lowpass';lp.frequency.value=3000;const pk=oc.createBiquadFilter();pk.type='peaking';pk.frequency.value=1600;pk.gain.value=7;node.connect(hp);hp.connect(lp);lp.connect(pk);node=pk;}
+  if(p.robot){const rm=oc.createGain();rm.gain.value=0;const o=oc.createOscillator();o.frequency.value=58;o.connect(rm.gain);node.connect(rm);const dry=oc.createGain();dry.gain.value=.25;node.connect(dry);const mix=oc.createGain();rm.connect(mix);dry.connect(mix);node=mix;o.start();}
+  if(p.shaky){const tg=oc.createGain();tg.gain.value=.78;const lfo=oc.createOscillator();lfo.frequency.value=6.5;const d=oc.createGain();d.gain.value=.22;lfo.connect(d);d.connect(tg.gain);node.connect(tg);node=tg;lfo.start();}
+  const out=oc.createGain();node.connect(out);
+  if(p.echo){const dl=oc.createDelay(1);dl.delayTime.value=.24;const fb=oc.createGain();fb.gain.value=.38;const wet=oc.createGain();wet.gain.value=.45;node.connect(dl);dl.connect(fb);fb.connect(dl);dl.connect(wet);wet.connect(out);}
+  out.connect(oc.destination);s.start();
+  return normalize(await oc.startRendering(),.9);
+}
+function designFromText(raw){
+  const t=raw.toLowerCase();const p={semis:0,tone:0,speed:1,robot:false,echo:false,phone:false,shaky:false};const tags=[];
+  const has=(...w)=>w.some(x=>t.includes(x));
+  if(has('ยักษ์','มหึมา','สัตว์ประหลาด','giant','monster')){p.semis-=8;p.tone-=.6;tags.push('ต่ำมาก');}
+  else if(has('ทุ้ม','ต่ำ','หนัก','ผู้ชาย','ลุง','สารคดี','deep','low')){p.semis-=4;p.tone-=.4;tags.push('ทุ้ม ต่ำ');}
+  if(has('เด็ก','การ์ตูน','จิ๋ว','kid','child','cartoon')){p.semis+=7;p.tone+=.5;tags.push('เสียงเด็ก');}
+  else if(has('แหลม','สูง','ผู้หญิง','สาว','ป้า','ยาย','high')){p.semis+=4;p.tone+=.3;tags.push('เสียงสูง');}
+  if(has('แก่','ชรา','ยาย','คุณตา','ลุง','สั่น','old')){p.shaky=true;tags.push('สั่นแบบคนสูงวัย');}
+  if(has('เร็ว','รีบ','แม่ค้า','ตื่นเต้น','fast')){p.speed=1.16;tags.push('พูดเร็ว');}
+  else if(has('ช้า','สุขุม','สารคดี','นิ่ง','slow','calm')){p.speed=.9;tags.push('พูดช้า สุขุม');}
+  if(has('หุ่นยนต์','หุ่น','robot','เครื่องจักร')){p.robot=true;tags.push('หุ่นยนต์');}
+  if(has('ก้อง','ถ้ำ','ห้องโถง','ประกาศ','echo')){p.echo=true;tags.push('ก้อง');}
+  if(has('โทรศัพท์','วิทยุ','ตามสาย','phone','radio')){p.phone=true;tags.push('ผ่านโทรศัพท์');}
+  if(has('สดใส','ร่าเริง','ใส')){p.tone+=.3;tags.push('โทนใส');}
+  if(has('อบอุ่น','นุ่ม','warm')){p.tone-=.25;tags.push('โทนอบอุ่น');}
+  p.semis=clamp(p.semis,-12,12);p.tone=clamp(+p.tone.toFixed(1),-1,1);
+  return {p,tags};
+}
+const VOICES=[
+  {name:'ผู้บรรยายสารคดี',em:'🎬',desc:'เสียงทุ้ม สุขุม',p:{semis:-4,tone:-.4,speed:.92}},
+  {name:'ป้าแม่ค้า',em:'🛒',desc:'เสียงแหลม พูดเร็ว',p:{semis:4,tone:.4,speed:1.14}},
+  {name:'เด็กน้อย',em:'🧒',desc:'เสียงเล็ก สดใส',p:{semis:7,tone:.6,speed:1.04}},
+  {name:'ยักษ์',em:'👹',desc:'ต่ำมาก ก้อง',p:{semis:-8,tone:-.7,speed:.86,echo:true}},
+  {name:'หุ่นยนต์',em:'🤖',desc:'เสียงโลหะ',p:{semis:0,tone:.2,speed:.96,robot:true}},
+  {name:'คุณตา',em:'👴',desc:'ช้า เสียงสั่น',p:{semis:-2,tone:-.2,speed:.88,shaky:true}},
+  {name:'เสียงตามสาย',em:'📢',desc:'ประกาศ ก้อง',p:{semis:0,tone:.3,speed:1,phone:true,echo:true}},
+].map(v=>({...v,p:{semis:0,tone:0,speed:1,robot:false,echo:false,phone:false,shaky:false,...v.p}}));
+
+/* ---------- music ---------- */
+const MOODS={
+  bright:{label:'สดใส',bpm:116,minor:false,drums:2,prog:[0,4,5,3],arp:2,cut:2600,wave:'triangle'},
+  excited:{label:'ตื่นเต้น',bpm:136,minor:true,drums:3,prog:[0,5,3,4],arp:4,cut:3200,wave:'sawtooth'},
+  calm:{label:'พื้นหลังสบายๆ',bpm:84,minor:false,drums:1,prog:[0,5,3,4],arp:1,cut:1500,wave:'sine'},
+  sad:{label:'เศร้า',bpm:70,minor:true,drums:0,prog:[0,5,2,6],arp:1,cut:1300,wave:'triangle'},
+  mystery:{label:'ลึกลับ',bpm:90,minor:true,drums:1,prog:[0,5,0,4],arp:0,cut:900,wave:'sine'},
+};
+function parseMusic(prompt){const t=prompt.toLowerCase();const has=(...w)=>w.some(x=>t.includes(x));let mood='bright';
+  if(has('ตื่นเต้น','มันส์','เร้าใจ','แอคชั่น','ระทึกใจ','เปิดตัวยิ่งใหญ่','epic','hype','action'))mood='excited';
+  else if(has('เศร้า','เหงา','ซึ้ง','คิดถึง','sad'))mood='sad';
+  else if(has('ลึกลับ','น่ากลัว','สยอง','หลอน','mystery','horror','dark'))mood='mystery';
+  else if(has('พื้นหลัง','ผ่อนคลาย','สบาย','ชิล','นุ่ม','เบาๆ','calm','chill','lofi'))mood='calm';
+  const m={...MOODS[mood],mood};
+  if(has('เร็วขึ้น','เร็ว','faster','fast'))m.bpm+=18;if(has('ช้าลง','ช้า','slow'))m.bpm-=14;
+  if(has('ไม่มีกลอง','เงียบ'))m.drums=0;if(has('กลองหนัก','กลองเยอะ'))m.drums=3;
+  return m;}
+const MAJ=[0,2,4,5,7,9,11],MIN=[0,2,3,5,7,8,10];
+const mtof=m=>440*2**((m-69)/12);
+async function renderMusic(cfg,seconds,seed){
+  const r=rng(seed);const oc=new OAC(2,Math.ceil(seconds*SR),SR);
+  const comp=oc.createDynamicsCompressor();comp.threshold.value=-16;comp.ratio.value=4;comp.connect(oc.destination);
+  const master=oc.createGain();master.connect(comp);master.gain.setValueAtTime(0,0);master.gain.linearRampToValueAtTime(1,.4);master.gain.setValueAtTime(1,Math.max(.5,seconds-1.6));master.gain.linearRampToValueAtTime(0,seconds);
+  const nb=oc.createBuffer(1,SR*2,SR);{const d=nb.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=r()*2-1;}
+  const scale=cfg.minor?MIN:MAJ;const root=48+[0,2,4,5,7,9][Math.floor(r()*6)];
+  const deg=i=>scale[((i%7)+7)%7]+12*Math.floor(i/7);
+  const chord=d=>[deg(d),deg(d+2),deg(d+4)];
+  const beat=60/cfg.bpm,bar=beat*4,nBars=Math.ceil(seconds/bar);
+  const padF=oc.createBiquadFilter();padF.type='lowpass';padF.frequency.value=cfg.cut*.7;padF.connect(master);
+  const leadF=oc.createBiquadFilter();leadF.type='lowpass';leadF.frequency.value=cfg.cut*1.4;leadF.connect(master);
+  const dl=oc.createDelay(2);dl.delayTime.value=beat*.75;const fb=oc.createGain();fb.gain.value=.3;const wet=oc.createGain();wet.gain.value=.25;leadF.connect(dl);dl.connect(fb);fb.connect(dl);dl.connect(wet);wet.connect(master);
+  const bassF=oc.createBiquadFilter();bassF.type='lowpass';bassF.frequency.value=520;bassF.connect(master);
+  const drumBus=oc.createGain();drumBus.gain.value=.9;drumBus.connect(master);
+  function env(t,peak,a,d,out){const g=oc.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+a);g.gain.exponentialRampToValueAtTime(.0001,t+a+d);g.connect(out);return g;}
+  function note(type,f,t,peak,a,d,out){const o=oc.createOscillator();o.type=type;o.frequency.value=f;o.connect(env(t,peak,a,d,out));o.start(t);o.stop(t+a+d+.05);}
+  function kick(t,v=1){const o=oc.createOscillator();o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(42,t+.12);o.connect(env(t,.9*v,.003,.32,drumBus));o.start(t);o.stop(t+.4);}
+  function nz(t,type,f,peak,d){const s=oc.createBufferSource();s.buffer=nb;const fl=oc.createBiquadFilter();fl.type=type;fl.frequency.value=f;s.connect(fl);fl.connect(env(t,peak,.002,d,drumBus));s.start(t,r()*1.5,d+.05);}
+  function snare(t,v=1){nz(t,'highpass',1500,.35*v,.16);note('sine',190,t,.18*v,.002,.08,drumBus);}
+  function hat(t,v=1){nz(t,'highpass',7500,.1*v,.035);}
+  for(let b=0;b<nBars;b++){
+    const t=b*bar;if(t>=seconds)break;const d=cfg.prog[b%cfg.prog.length];const ch=chord(d).map(n=>root+n);
+    const padType=cfg.wave==='sawtooth'||cfg.mood==='bright'?'sawtooth':'triangle';const pv=padType==='sawtooth'?.03:.06;
+    for(const n of ch)for(const det of [-7,7]){const o=oc.createOscillator();o.type=padType;o.frequency.value=mtof(n+12);o.detune.value=det;const g=oc.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(pv,t+.3);g.gain.setValueAtTime(pv,t+bar-.1);g.gain.linearRampToValueAtTime(0,t+bar+.2);o.connect(g);g.connect(padF);o.start(t);o.stop(t+bar+.25);}
+    const bn=mtof(root+deg(d)-12);
+    if(cfg.drums>=2){for(let e=0;e<8;e++)note('triangle',e%4===3?bn*2:bn,t+e*beat/2,.32,.005,beat/2*.8,bassF);}
+    else{note('triangle',bn,t,.34,.02,bar*.9,bassF);}
+    if(cfg.arp>0){const pool=[...ch,ch[0]+12].map(n=>n+24);const steps=4*cfg.arp,step=bar/steps;const up=r()<.6;
+      for(let k=0;k<steps;k++){if(cfg.arp===1&&r()<.15)continue;const n=up?pool[k%pool.length]:pool[Math.floor(r()*pool.length)];note(cfg.wave,mtof(n),t+k*step,cfg.wave==='sawtooth'?.06:.1,.005,Math.min(step*1.8,.7),leadF);}}
+    else{for(let k=0;k<4;k++)if(r()<.4){const n=ch[Math.floor(r()*3)]+36;note('sine',mtof(n),t+k*beat,.09,.005,1.6,leadF);note('sine',mtof(n)*2.76,t+k*beat,.025,.003,.5,leadF);}}
+    if(cfg.drums>0&&!(b===0&&nBars>4&&cfg.drums>=2)){
+      for(let k=0;k<4;k++){const tb=t+k*beat;
+        if(cfg.drums===1){if(k===0)kick(tb,.7);if(k===2)kick(tb+beat/2,.55);if(k%2)snare(tb,.35);hat(tb+beat/2,.6);}
+        else if(cfg.drums===2){if(k%2===0)kick(tb);else snare(tb);hat(tb);hat(tb+beat/2,.6);}
+        else{kick(tb);if(k%2)snare(tb);for(let s=0;s<4;s++)hat(tb+s*beat/4,s===2?1.2:.55);}}}
+  }
+  return normalize(await oc.startRendering(),.85);
+}
+
+/* ---------- sound effects ---------- */
+function fxKit(oc,r){
+  const nb=oc.createBuffer(1,SR*4,SR);{const d=nb.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=r()*2-1;}
+  const out=oc.destination;
+  const amp=(t,peak,a,d,o=out)=>{const g=oc.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+a);g.gain.exponentialRampToValueAtTime(.0001,t+a+d);g.connect(o);return g;};
+  const filt=(type,f,q)=>{const b=oc.createBiquadFilter();b.type=type;b.frequency.value=f;if(q!=null)b.Q.value=q;return b;};
+  const tone=(type,t,f,peak,a,d,fEnd,o=out)=>{const os=oc.createOscillator();os.type=type;os.frequency.setValueAtTime(f,t);if(fEnd)os.frequency.exponentialRampToValueAtTime(fEnd,t+a+d);os.connect(amp(t,peak,a,d,o));os.start(t);os.stop(t+a+d+.03);return os;};
+  const burst=(t,type,f,q,peak,a,d,o=out)=>{const fl=filt(type,f,q);fl.connect(amp(t,peak,a,d,o));const s=oc.createBufferSource();s.buffer=nb;s.connect(fl);s.start(t,r()*2,a+d+.03);return fl;};
+  const noise=(t,dur,node)=>{const s=oc.createBufferSource();s.buffer=nb;s.connect(node);s.start(t,r()*.5,dur);};
+  return {oc,r,out,amp,filt,tone,burst,noise};
+}
+const SFX=[
+  {name:'คลิก',em:'🖱️',w:['คลิก','กด','click','tap'],dur:.15,f:k=>{k.burst(0,'highpass',2500,.7,.9,.001,.025);k.tone('sine',0,1900,.3,.001,.03);}},
+  {name:'วูบ',em:'💨',w:['วูบ','วูช','ฟิ้ว','ลม','whoosh','swoosh'],dur:.95,f:k=>{const g=k.oc.createGain();g.gain.setValueAtTime(.0001,0);g.gain.exponentialRampToValueAtTime(.9,.42);g.gain.exponentialRampToValueAtTime(.0001,.9);g.connect(k.out);const b=k.filt('bandpass',250,2.2);b.frequency.setValueAtTime(250,0);b.frequency.exponentialRampToValueAtTime(2800,.42);b.frequency.exponentialRampToValueAtTime(300,.9);b.connect(g);k.noise(0,.95,b);}},
+  {name:'ปรบมือ',em:'👏',w:['ปรบมือ','ปรบ','ตบมือ','clap','applause'],dur:2.3,f:k=>{for(let i=0;i<46;i++){const t=k.r()*(i<6?.4:1.8);k.burst(t,'bandpass',900+k.r()*900,1.3,.3+k.r()*.35,.002,.06+k.r()*.05);}}},
+  {name:'ป๊อป',em:'🫧',w:['ป๊อป','ป็อป','ปุ๊','pop','บับเบิล'],dur:.2,f:k=>{k.tone('sine',0,900,.7,.002,.09,170);}},
+  {name:'ติ๊ง',em:'🔔',w:['ติ๊ง','กริ่ง','ระฆัง','กระดิ่ง','ding','bell'],dur:1.7,f:k=>{[[1,.4,1.6],[2.76,.2,1],[5.4,.1,.6],[8.9,.05,.3]].forEach(([m,p,d])=>k.tone('sine',0,1046*m,p,.003,d));}},
+  {name:'ถูกต้อง',em:'✅',w:['ถูก','สำเร็จ','correct','success','ผ่าน'],dur:.8,f:k=>{k.tone('sine',0,880,.35,.005,.3);k.tone('sine',.12,1320,.35,.005,.55);k.tone('triangle',.12,2640,.06,.005,.4);}},
+  {name:'ผิด',em:'❌',w:['ผิด','บัซ','buzz','wrong','error'],dur:.75,f:k=>{const lp=k.filt('lowpass',1400);lp.connect(k.out);k.tone('square',0,150,.2,.01,.28,0,lp);k.tone('square',.34,140,.2,.01,.34,0,lp);}},
+  {name:'เด้ง',em:'🎾',w:['เด้ง','สปริง','ดึ๋ง','boing','bounce'],dur:.85,f:k=>{const n=300,c=new Float32Array(n);for(let i=0;i<n;i++){const t=i/n*.8;c[i]=220*(1+.45*Math.sin(2*Math.PI*13*t)*Math.exp(-3.5*t))+t*60;}const o=k.oc.createOscillator();o.frequency.setValueCurveAtTime(c,0,.8);o.connect(k.amp(0,.6,.005,.78));o.start(0);o.stop(.82);}},
+  {name:'ระเบิด',em:'💥',w:['ระเบิด','ตูม','บึ้ม','boom','explosion'],dur:2.3,f:k=>{const lp=k.filt('lowpass',900,.8);lp.frequency.setValueAtTime(900,0);lp.frequency.exponentialRampToValueAtTime(60,2.1);lp.connect(k.amp(0,1,.005,2.1));k.noise(0,2.2,lp);k.tone('sine',0,75,.9,.005,1.3,28);}},
+  {name:'ฝนตก',em:'🌧️',w:['ฝน','rain'],dur:3.2,f:k=>{const b=k.filt('bandpass',2800,.4);const g=k.oc.createGain();g.gain.setValueAtTime(0,0);g.gain.linearRampToValueAtTime(.35,.5);g.gain.setValueAtTime(.35,2.6);g.gain.linearRampToValueAtTime(0,3.2);b.connect(g);g.connect(k.out);k.noise(0,3.2,b);for(let i=0;i<70;i++){const t=.2+k.r()*2.8,f=1500+k.r()*2500;k.tone('sine',t,f,.05+k.r()*.05,.001,.03,f*.6);}}},
+  {name:'ฟ้าร้อง',em:'⛈️',w:['ฟ้าร้อง','ฟ้าผ่า','thunder'],dur:3.6,f:k=>{const n=400,c=new Float32Array(n);let lvl=0;for(let i=0;i<n;i++){const t=i/n*3.5;if(k.r()<.04)lvl=.6+k.r()*.4;lvl*=.985;c[i]=Math.max(.001,lvl*Math.exp(-t*.7)+(t<.1?t*8:0));}const g=k.oc.createGain();g.gain.setValueCurveAtTime(c,0,3.5);g.connect(k.out);const lp=k.filt('lowpass',260,.7);lp.connect(g);k.noise(0,3.55,lp);k.burst(0,'highpass',1500,.7,.35,.003,.3);}},
+  {name:'เคาะประตู',em:'🚪',w:['เคาะ','ประตู','knock','door'],dur:.65,f:k=>{[0,.17,.34].forEach(t=>{k.burst(t,'lowpass',900,1,.9,.002,.07);k.tone('sine',t,170,.6,.002,.09,120);});}},
+  {name:'เลเซอร์',em:'🔫',w:['เลเซอร์','ยิง','ปิ้ว','laser','shoot'],dur:.32,f:k=>{const lp=k.filt('lowpass',3500);lp.connect(k.out);k.tone('square',0,1800,.18,.002,.25,180,lp);}},
+  {name:'หัวใจเต้น',em:'❤️',w:['หัวใจ','ตึกตัก','heartbeat','heart'],dur:1.7,f:k=>{[0,.85].forEach(t=>{k.tone('sine',t,70,.9,.008,.15,42);k.tone('sine',t+.22,62,.7,.008,.15,40);});}},
+  {name:'พิมพ์ดีด',em:'⌨️',w:['พิมพ์','คีย์บอร์ด','typing','keyboard'],dur:1.7,f:k=>{let t=0;for(let i=0;i<14&&t<1.55;i++){k.burst(t,'bandpass',2000+k.r()*2500,1.5,.6,.001,.025);t+=.05+k.r()*.11;}}},
+  {name:'ไรเซอร์',em:'🚀',w:['ไรเซอร์','พุ่งขึ้น','ลุ้น','riser','build'],dur:2.3,f:k=>{const b=k.filt('bandpass',200,3);b.frequency.setValueAtTime(200,0);b.frequency.exponentialRampToValueAtTime(6000,2.1);const g=k.oc.createGain();g.gain.setValueAtTime(.02,0);g.gain.exponentialRampToValueAtTime(.8,2.1);g.gain.linearRampToValueAtTime(0,2.25);b.connect(g);g.connect(k.out);k.noise(0,2.3,b);k.tone('sine',0,200,.12,1.9,.2,900);}},
+  {name:'แจ้งเตือน',em:'📱',w:['แจ้งเตือน','เตือน','notification','ข้อความ'],dur:.6,f:k=>{k.tone('sine',0,1046,.4,.005,.22);k.tone('sine',.12,1568,.4,.005,.4);}},
+  {name:'เหรียญ',em:'🪙',w:['เหรียญ','เงิน','coin','แต้ม'],dur:.5,f:k=>{k.tone('square',0,988,.15,.002,.07);k.tone('square',.075,1319,.15,.002,.38);}},
+  {name:'ฝีเท้า',em:'👣',w:['เดิน','ฝีเท้า','ก้าว','footstep','step'],dur:2,f:k=>{[0,.5,1,1.5].forEach(t=>{k.burst(t,'lowpass',650,1,.8,.003,.09);k.burst(t+.03,'bandpass',2500,1,.12,.002,.05);});}},
+];
+function matchSfx(text){const t=text.toLowerCase();let best=null,pos=1e9;for(const s of SFX)for(const w of s.w){const i=t.indexOf(w);if(i>=0&&i<pos){pos=i;best=s;}}return best;}
+async function renderSfx(def,seed){const oc=new OAC(1,Math.ceil(def.dur*SR),SR);def.f(fxKit(oc,rng(seed)));return normalize(await oc.startRendering(),.9);}
+
+/* ---------- project state ---------- */
+const TRACKS=[{name:'เสียงพากย์',ic:'i-mic'},{name:'เสียงคนอื่น',ic:'i-people'},{name:'เพลง',ic:'i-music'},{name:'เอฟเฟกต์',ic:'i-fx'}];
+const S={clips:[],playhead:0,pps:40,muted:[false,false,false,false],sel:null,playing:false};
+let uid=1;
+function clipDur(c){return c.buffer?c.buffer.duration:c.tts.dur;}
+function projectEnd(){return S.clips.reduce((m,c)=>Math.max(m,c.start+clipDur(c)),0);}
+function addClip(o){
+  let start=S.playhead;const dur=o.buffer?o.buffer.duration:o.tts.dur;
+  for(let guard=0;guard<50;guard++){const hit=S.clips.find(c=>c.track===o.track&&start<c.start+clipDur(c)-.01&&start+dur>c.start+.01);if(!hit)break;start=hit.start+clipDur(hit);}
+  const c={id:uid++,gain:1,...o,start};c.pk=c.buffer?peaks(c.buffer,Math.min(600,Math.max(40,Math.ceil(dur*20)))):null;
+  S.clips.push(c);S.sel=c.id;renderTimeline();scrollToTime(start);
+  toast(`เพิ่ม “${c.name}” ที่ ${fmtShort(start)} แล้ว`);
+}
+
+/* ---------- timeline UI ---------- */
+const labels=$('#labels'),inner=$('#tlInner'),ruler=$('#ruler'),scroller=$('#tlScroll'),ph=$('#ph');
+const lanes=[];
+TRACKS.forEach((t,i)=>{
+  const l=document.createElement('div');l.className='lane-label t'+i;l.innerHTML=`<span class="ic"><svg class="i"><use href="#${t.ic}"/></svg></span><span class="nm">${t.name}</span><button class="mute" aria-pressed="false" aria-label="ปิดเสียงแทร็ก ${t.name}"><svg class="i"><use href="#i-vol"/></svg></button>`;
+  const mb=l.querySelector('.mute');mb.onclick=()=>{S.muted[i]=!S.muted[i];mb.setAttribute('aria-pressed',S.muted[i]);mb.querySelector('use').setAttribute('href',S.muted[i]?'#i-muted':'#i-vol');lanes[i].classList.toggle('muted',S.muted[i]);if(S.playing){play();}};
+  labels.appendChild(l);
+  const lane=document.createElement('div');lane.className='lane t'+i;lane.dataset.t=i;inner.insertBefore(lane,ph);lanes.push(lane);
+});
+function timeFromX(clientX){const r=inner.getBoundingClientRect();return clamp((clientX-r.left)/S.pps,0,1e4);}
+function seek(t){S.playhead=Math.max(0,t);if(S.playing)play();else updateHead();}
+ruler.addEventListener('click',e=>seek(timeFromX(e.clientX)));
+lanes.forEach(l=>l.addEventListener('click',e=>{if(e.target===l){S.sel=null;renderSel();lanes.forEach(x=>x.querySelectorAll('.clip').forEach(c=>c.classList.remove('sel')));seek(timeFromX(e.clientX));}}));
+function renderTimeline(){
+  const end=Math.max(projectEnd(),S.playhead)+8;const total=Math.max(end,scroller.clientWidth/S.pps);
+  inner.style.width=(total*S.pps)+'px';
+  const step=S.pps>=60?1:S.pps>=25?1:5,labelEvery=S.pps>=60?2:S.pps>=25?5:10;let h='';
+  for(let s=0;s<=total;s+=step){const big=s%labelEvery===0;h+=`<div class="tick${big?' big':''}" style="left:${s*S.pps}px">${big?`<span>${fmtShort(s)}</span>`:''}</div>`;}
+  ruler.innerHTML=h;
+  lanes.forEach(l=>l.innerHTML='');
+  for(const c of S.clips){
+    const el=document.createElement('div');el.className='clip'+(c.id===S.sel?' sel':'');el.style.left=(c.start*S.pps)+'px';const w=Math.max(14,clipDur(c)*S.pps);el.style.width=w+'px';
+    el.innerHTML=`<canvas></canvas><span class="cn">${escapeHtml(c.name)}</span>`;lanes[c.track].appendChild(el);
+    const cv=el.querySelector('canvas');const col=cssVar(el,'--accent-mid');
+    if(c.pk)drawBarsWave(cv,c.pk,col,3,1.6);else{const pk=new Float32Array(60).map((_,i)=>.25+.6*Math.abs(Math.sin(i*1.7)*Math.cos(i*.45)));drawBarsWave(cv,pk,col,3,1.6);}
+    attachDrag(el,c);
+  }
+  $('#emptyHint').classList.toggle('hide',S.clips.length>0);
+  renderSel();updateHead();
+}
+function escapeHtml(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function attachDrag(el,c){
+  let sx=0,orig=0,moved=false,id=null;
+  el.addEventListener('pointerdown',e=>{e.stopPropagation();id=e.pointerId;el.setPointerCapture(id);sx=e.clientX;orig=c.start;moved=false;S.sel=c.id;document.querySelectorAll('.clip.sel').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');renderSel();});
+  el.addEventListener('pointermove',e=>{if(e.pointerId!==id)return;const dx=e.clientX-sx;if(Math.abs(dx)>4)moved=true;if(moved){c.start=Math.max(0,orig+dx/S.pps);el.style.left=(c.start*S.pps)+'px';}});
+  const up=e=>{if(e.pointerId!==id)return;id=null;if(moved){renderTimeline();if(S.playing)play();}};
+  el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);
+  el.addEventListener('click',e=>e.stopPropagation());
+}
+function selClip(){return S.clips.find(c=>c.id===S.sel)||null;}
+function renderSel(){const c=selClip(),bar=$('#selbar');bar.classList.toggle('hide',!c);if(!c)return;bar.className='selbar t'+c.track;$('#selName').textContent=`${c.name} · ${c.start.toFixed(1)}–${(c.start+clipDur(c)).toFixed(1)} วิ`;$('#selVol').value=c.gain;}
+$('#selVol').oninput=e=>{const c=selClip();if(c)c.gain=+e.target.value;};
+$('#selDel').onclick=()=>{S.clips=S.clips.filter(c=>c.id!==S.sel);S.sel=null;renderTimeline();if(S.playing)play();};
+$('#selDup').onclick=()=>{const c=selClip();if(!c)return;const keep=S.playhead;S.playhead=c.start+clipDur(c);addClip({track:c.track,name:c.name,buffer:c.buffer,tts:c.tts,gain:c.gain});S.playhead=keep;updateHead();};
+$('#selPlay').onclick=()=>{const c=selClip();if(!c)return;if(c.buffer)previewBuffer(c.buffer);else{stopTransport();speak({...c.tts,gain:c.gain});}};
+$('#zoomIn').onclick=()=>{S.pps=Math.min(160,S.pps*1.5);renderTimeline();scrollToTime(S.playhead);};
+$('#zoomOut').onclick=()=>{S.pps=Math.max(8,S.pps/1.5);renderTimeline();scrollToTime(S.playhead);};
+$('#clearAll').onclick=()=>{if(!S.clips.length)return;if(!confirm('ลบคลิปทั้งหมดในไทม์ไลน์?'))return;stopTransport();S.clips=[];S.sel=null;S.playhead=0;renderTimeline();};
+function scrollToTime(t){const x=t*S.pps;if(x<scroller.scrollLeft+20||x>scroller.scrollLeft+scroller.clientWidth-40)scroller.scrollLeft=Math.max(0,x-scroller.clientWidth*.3);}
+function updateHead(){ph.style.left=(S.playhead*S.pps)+'px';$('#phLabel').textContent=fmtShort(S.playhead);const end=Math.max(projectEnd(),.001);$('#tNow').textContent=fmt(S.playhead);$('#tEnd').textContent=fmt(projectEnd(),false);$('#progFill').style.width=clamp(S.playhead/end*100,0,100)+'%';}
+$('#prog').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect();seek((e.clientX-r.left)/r.width*projectEnd());});
+window.addEventListener('resize',()=>renderTimeline());
+
+/* ---------- transport ---------- */
+let tp={nodes:[],timers:[],raf:0,t0:0,from:0};
+function stopTransport(){tp.nodes.forEach(n=>{try{n.stop()}catch(e){}});tp.timers.forEach(clearTimeout);tp.nodes=[];tp.timers=[];cancelAnimationFrame(tp.raf);if(S.playing)speechSynthesis.cancel();S.playing=false;$('#ppUse').setAttribute('href','#i-play');$('#playBtn').setAttribute('aria-label','เล่น');}
+function play(){
+  stopTransport();stopPreview();const c=ac();const end=projectEnd();if(!S.clips.length){toast('ยังไม่มีคลิปในไทม์ไลน์');return;}
+  if(S.playhead>=end-.05)S.playhead=0;
+  const from=S.playhead,t0=c.currentTime+.06;tp.from=from;tp.t0=t0;
+  const comp=c.createDynamicsCompressor();comp.threshold.value=-8;comp.connect(c.destination);
+  for(const cl of S.clips){if(S.muted[cl.track])continue;const ce=cl.start+clipDur(cl);if(ce<=from)continue;
+    if(cl.buffer){const s=c.createBufferSource();s.buffer=cl.buffer;const g=c.createGain();g.gain.value=cl.gain;s.connect(g);g.connect(comp);s.start(t0+Math.max(0,cl.start-from),Math.max(0,from-cl.start));tp.nodes.push(s);}
+    else if(cl.start>=from-.1){tp.timers.push(setTimeout(()=>speak({...cl.tts,gain:cl.gain}),Math.max(0,(cl.start-from)*1000+60)));}}
+  S.playing=true;$('#ppUse').setAttribute('href','#i-pause');$('#playBtn').setAttribute('aria-label','หยุดชั่วคราว');
+  const tick=()=>{S.playhead=from+(c.currentTime-t0);if(S.playhead<from)S.playhead=from;if(S.playhead>=end){S.playhead=end;updateHead();stopTransport();return;}updateHead();scrollToTime(S.playhead);tp.raf=requestAnimationFrame(tick);};tick();
+}
+$('#playBtn').onclick=()=>{if(S.playing)stopTransport();else play();};
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&!/INPUT|TEXTAREA|SELECT|BUTTON/.test(document.activeElement.tagName)){e.preventDefault();$('#playBtn').click();}});
+
+/* ---------- export ---------- */
+function encodeWav(buf){const ch=buf.numberOfChannels,len=buf.length,sr=buf.sampleRate,ab=new ArrayBuffer(44+len*ch*2),v=new DataView(ab);const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));};
+  ws(0,'RIFF');v.setUint32(4,36+len*ch*2,true);ws(8,'WAVE');ws(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,ch,true);v.setUint32(24,sr,true);v.setUint32(28,sr*ch*2,true);v.setUint16(32,ch*2,true);v.setUint16(34,16,true);ws(36,'data');v.setUint32(40,len*ch*2,true);
+  const chans=[...Array(ch)].map((_,c)=>buf.getChannelData(c));let o=44;for(let i=0;i<len;i++)for(let c=0;c<ch;c++){const s=clamp(chans[c][i],-1,1);v.setInt16(o,s<0?s*0x8000:s*0x7FFF,true);o+=2;}return new Blob([ab],{type:'audio/wav'});}
+$('#exportBtn').onclick=async()=>{
+  const bufClips=S.clips.filter(c=>c.buffer&&!S.muted[c.track]);if(!bufClips.length){toast(S.clips.length?'คลิปเสียงเครื่องอ่านบันทึกเป็นไฟล์ไม่ได้ ใช้การอัดเสียงแทน':'ยังไม่มีคลิปให้บันทึก');return;}
+  const end=bufClips.reduce((m,c)=>Math.max(m,c.start+clipDur(c)),0)+.2;const oc=new OAC(2,Math.ceil(end*SR),SR);
+  const comp=oc.createDynamicsCompressor();comp.threshold.value=-8;comp.connect(oc.destination);
+  for(const c of bufClips){const s=oc.createBufferSource();s.buffer=c.buffer;const g=oc.createGain();g.gain.value=c.gain;s.connect(g);g.connect(comp);s.start(c.start);}
+  toast('กำลังรวมเสียง…');const out=await oc.startRendering();const url=URL.createObjectURL(encodeWav(out));const a=document.createElement('a');a.href=url;a.download='voice-studio.wav';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);
+  toast(S.clips.some(c=>c.tts)?'บันทึกแล้ว (ไม่รวมคลิปเสียงเครื่องอ่าน)':'บันทึกไฟล์ WAV แล้ว');
+};
+
+/* ---------- tabs & segmented ---------- */
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-selected',x===t));document.querySelectorAll('.panel').forEach((p,i)=>p.classList.toggle('on',i==t.dataset.p));if(t.dataset.p==='2')drawMusicBars();});
+function seg(id,onChange){const el=$(id);el.querySelectorAll('button').forEach(b=>b.onclick=()=>{el.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));onChange(b.dataset.m);});}
+
+/* ---------- panel 0: narration ---------- */
+const nCap=makeCapture($('#nRec'),null,null);
+const nAddRow=document.createElement('div');nAddRow.className='row';nAddRow.innerHTML='<button class="btn" id="nPlay">▶ ฟัง</button><button class="btn primary" id="nAdd">เพิ่มลงไทม์ไลน์</button>';$('#nRec').appendChild(nAddRow);
+$('#nPlay').onclick=()=>{if(!nCap.buffer)return toast('อัดเสียงหรืออัปโหลดไฟล์ก่อน');previewBuffer(nCap.buffer);};
+let takeNo=1;
+$('#nAdd').onclick=()=>{if(!nCap.buffer)return toast('อัดเสียงหรืออัปโหลดไฟล์ก่อน');addClip({track:0,name:'เสียงผม '+(takeNo++),buffer:nCap.buffer});};
+seg('#nMode',m=>{$('#nRec').classList.toggle('hide',m!=='rec');$('#nTts').classList.toggle('hide',m!=='tts');});
+$('#nRate').oninput=e=>$('#nRateV').textContent=(+e.target.value).toFixed(2)+'×';
+function nTts(){const text=$('#nText').value.trim();if(!text){toast('พิมพ์ข้อความก่อน');return null;}const rate=+$('#nRate').value;return{text,lang:$('#nLang').value,pitch:1,rate,dur:ttsDur(text,rate)};}
+$('#nSay').onclick=()=>{const t=nTts();if(t){stopPreview();stopTransport();speak(t);}};
+$('#nAddTts').onclick=()=>{const t=nTts();if(t)addClip({track:0,name:'อ่าน: '+t.text.slice(0,14),tts:t});};
+
+/* ---------- panel 1: voices ---------- */
+let voices=[...VOICES],vSel=0,vTags=[];
+const P=()=>({semis:+$('#vSemis').value,tone:+$('#vTone').value,speed:+$('#vSpeed').value,robot:$('#vRobot').checked,echo:$('#vEcho').checked,phone:$('#vPhone').checked,shaky:$('#vShaky').checked});
+function setP(p){$('#vSemis').value=p.semis;$('#vTone').value=p.tone;$('#vSpeed').value=p.speed;$('#vRobot').checked=p.robot;$('#vEcho').checked=p.echo;$('#vPhone').checked=p.phone;$('#vShaky').checked=p.shaky;syncPV();}
+function syncPV(){const p=P();$('#vSemisV').textContent=(p.semis>0?'+':'')+p.semis;$('#vToneV').textContent=(p.tone>0?'+':'')+p.tone.toFixed(1);$('#vSpeedV').textContent=p.speed.toFixed(2)+'×';}
+['#vSemis','#vTone','#vSpeed'].forEach(s=>$(s).addEventListener('input',syncPV));
+function renderVoices(){const host=$('#vCards');host.innerHTML='';voices.forEach((v,i)=>{const b=document.createElement('button');b.className='vcard';b.setAttribute('aria-pressed',i===vSel);b.innerHTML=`<span class="em">${v.em}</span><b>${escapeHtml(v.name)}</b><small>${escapeHtml(v.desc)}</small>`;b.onclick=()=>{vSel=i;renderVoices();setP(v.p);showTags(v.tags||[]);};host.appendChild(b);});$('#vSelName').textContent='· '+voices[vSel].name;}
+function showTags(tags){$('#vTags').innerHTML=tags.map(t=>`<span class="chip static">${escapeHtml(t)}</span>`).join('');}
+seg('#vSrc',m=>$('#vDesign').classList.toggle('hide',m!=='design'));
+const DESC_EX=['ป้าแม่ค้า เสียงแหลม พูดเร็ว','ผู้บรรยายสารคดี เสียงทุ้ม สุขุม','เด็กน้อยการ์ตูน สดใส','หุ่นยนต์ในห้องโถงก้อง','คุณยายเสียงสั่น พูดช้า','ประกาศเสียงตามสาย'];
+$('#vDescChips').innerHTML=DESC_EX.map(t=>`<button class="chip">${t}</button>`).join('');
+$('#vDescChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{$('#vDesc').value=c.textContent;$('#vDesignBtn').click();});
+$('#vDesignBtn').onclick=()=>{const d=$('#vDesc').value.trim();if(!d)return toast('พิมพ์บอกลักษณะเสียงก่อน');const {p,tags}=designFromText(d);
+  if(!tags.length)tags.push('ไม่พบคำที่รู้จัก ปรับแถบด้านล่างเองได้');
+  const name=$('#vName').value.trim()||('เสียง '+d.split(/\s+/)[0]).slice(0,18);
+  voices.push({name,em:'✨',desc:'ออกแบบจากคำบรรยาย',p,tags});vSel=voices.length-1;renderVoices();setP(p);showTags(tags);toast(`ออกแบบ “${name}” แล้ว`);};
+$('#vDesc').addEventListener('keydown',e=>{if(e.key==='Enter')$('#vDesignBtn').click();});
+const vCap=makeCapture($('#vRecWrap'),null,null);
+const useN=document.createElement('label');useN.className='note';useN.style.display='flex';useN.style.gap='6px';useN.style.alignItems='center';useN.innerHTML='<input type="checkbox" id="vUseN"> ใช้เสียงที่อัดไว้ในแท็บเสียงพากย์';$('#vRecWrap').appendChild(useN);
+let vMode='rec';seg('#vMode',m=>{vMode=m;$('#vRecWrap').classList.toggle('hide',m!=='rec');$('#vTtsWrap').classList.toggle('hide',m!=='tts');});
+let vCache={key:'',buf:null};
+async function voiceBuffer(){const src=$('#vUseN').checked?nCap.buffer:vCap.buffer;if(!src){toast($('#vUseN').checked?'แท็บเสียงพากย์ยังไม่มีเสียงอัด':'อัดเสียงหรืออัปโหลดไฟล์ก่อน');return null;}
+  const p=P();const key=JSON.stringify(p)+'|'+src.length+'|'+src.duration;if(vCache.key===key&&vCache.src===src)return vCache.buf;
+  const buf=await transformVoice(src,p);vCache={key,buf,src};return buf;}
+function voiceTts(){const text=$('#vText').value.trim();if(!text){toast('พิมพ์ข้อความก่อน');return null;}const p=P();return{text,lang:/[a-z]/i.test(text)&&!/[฀-๿]/.test(text)?'en-US':'th-TH',pitch:clamp(1+p.semis/9,0,2),rate:p.speed,dur:ttsDur(text,p.speed)};}
+$('#vPreview').onclick=async()=>{if(vMode==='rec'){const b=await voiceBuffer();if(b)previewBuffer(b);}else{const t=voiceTts();if(t){stopPreview();stopTransport();speak(t);}}};
+$('#vAdd').onclick=async()=>{const name=voices[vSel].name;if(vMode==='rec'){const b=await voiceBuffer();if(b)addClip({track:1,name,buffer:b});}else{const t=voiceTts();if(t)addClip({track:1,name,tts:t});}};
+renderVoices();setP(voices[0].p);
+
+/* ---------- panel 2: music ---------- */
+const M_EX=['เพลงเปิดตัวโปรเจกต์ สดใส','เพลงพื้นหลัง ผ่อนคลาย','ตื่นเต้น เร้าใจ','เศร้า ซึ้ง','ลึกลับ น่ากลัว','จังหวะเร็วขึ้น'];
+$('#mChips').innerHTML=M_EX.map(t=>`<button class="chip">${t}</button>`).join('');
+$('#mChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{if(c.textContent==='จังหวะเร็วขึ้น'&&$('#mPrompt').value.trim()){if(!$('#mPrompt').value.includes('เร็วขึ้น'))$('#mPrompt').value+=' จังหวะเร็วขึ้น';}else $('#mPrompt').value=c.textContent;makeMusic(true);});
+let music={buf:null,cfg:null,seed:1,pk:null};
+let mRaf=0;
+function drawMusicBars(){const cv=$('#mBars');const [g,w,h]=fitCanvas(cv);g.clearRect(0,0,w,h);const n=24,gap=w/n,bw=gap*.62;let vals;
+  if(pv&&pv.buf===music.buf){const d=new Uint8Array(pv.an.frequencyBinCount);pv.an.getByteFrequencyData(d);vals=[...Array(n)].map((_,i)=>{const a=Math.floor(Math.pow(i/n,1.6)*d.length*.7),b=Math.max(a+1,Math.floor(Math.pow((i+1)/n,1.6)*d.length*.7));let s=0;for(let j=a;j<b;j++)s+=d[j];return s/(b-a)/255;});}
+  else vals=music.pk?[...Array(n)].map((_,i)=>.25+.75*music.pk[i]):[...Array(n)].map((_,i)=>.08+.06*Math.abs(Math.sin(i*.6)));
+  const col=cssVar(cv,'--accent'),col2=cssVar(cv,'--accent-mid');
+  for(let i=0;i<n;i++){const bh=Math.max(6,vals[i]*h*.92);const x=i*gap+(gap-bw)/2,y=h-bh;const gr=g.createLinearGradient(0,y,0,h);gr.addColorStop(0,col);gr.addColorStop(1,col2);g.fillStyle=gr;g.beginPath();g.roundRect?g.roundRect(x,y,bw,bh,[bw/2,bw/2,3,3]):g.rect(x,y,bw,bh);g.fill();}
+  if(pv&&pv.buf===music.buf)mRaf=requestAnimationFrame(drawMusicBars);}
+async function makeMusic(fresh){const prompt=$('#mPrompt').value.trim()||'เพลงพื้นหลัง สดใส';const cfg=parseMusic(prompt);music.seed=fresh?hash(prompt):music.seed+7919;const len=+$('#mLen').value;
+  $('#mMeta').textContent='กำลังแต่งเพลง…';['#mPlay','#mAgain','#mAdd'].forEach(s=>$(s).disabled=true);
+  await new Promise(r=>setTimeout(r,30));
+  const buf=await renderMusic(cfg,len,music.seed);const rms=[];const d=buf.getChannelData(0),n=24,seg=Math.floor(d.length/n);for(let i=0;i<n;i++){let s=0;for(let j=i*seg;j<(i+1)*seg;j+=4)s+=d[j]*d[j];rms.push(Math.sqrt(s/(seg/4)));}const mx=Math.max(...rms)||1;
+  music={buf,cfg,seed:music.seed,pk:rms.map(v=>v/mx),prompt};
+  $('#mMeta').textContent=`${cfg.label} · ${cfg.bpm} BPM · ${cfg.minor?'ไมเนอร์':'เมเจอร์'} · ${len} วินาที`;['#mPlay','#mAgain','#mAdd'].forEach(s=>$(s).disabled=false);
+  playMusic();}
+function playMusic(){cancelAnimationFrame(mRaf);previewBuffer(music.buf,()=>{cancelAnimationFrame(mRaf);drawMusicBars();});drawMusicBars();}
+$('#mGo').onclick=()=>makeMusic(true);$('#mPrompt').addEventListener('keydown',e=>{if(e.key==='Enter')makeMusic(true);});
+$('#mPlay').onclick=()=>{if(pv&&pv.buf===music.buf){stopPreview();drawMusicBars();}else playMusic();};
+$('#mAgain').onclick=()=>makeMusic(false);
+$('#mAdd').onclick=()=>{if(music.buf)addClip({track:2,name:'เพลง'+music.cfg.label.replace('พื้นหลังสบายๆ','พื้นหลัง'),buffer:music.buf,gain:.7});};
+
+/* ---------- panel 3: sfx ---------- */
+let fx={def:null,buf:null};
+function renderFx(){const host=$('#fxCards');host.innerHTML='';SFX.forEach(s=>{const b=document.createElement('button');b.className='vcard';b.setAttribute('aria-pressed',fx.def===s);b.innerHTML=`<span class="em">${s.em}</span><b>${s.name}</b>`;b.onclick=()=>pickFx(s);host.appendChild(b);});}
+async function pickFx(s){fx.def=s;renderFx();fx.buf=await renderSfx(s,hash(s.name)+Math.floor(Math.random()*1000));previewBuffer(fx.buf);$('#fxAdd').disabled=false;$('#fxNote').textContent=`เสียง${s.name} · ${s.dur.toFixed(1)} วินาที · กดเพิ่มเพื่อวางที่ ${fmtShort(S.playhead)}`;}
+$('#fxGo').onclick=()=>{const t=$('#fxPrompt').value.trim();if(!t)return toast('พิมพ์ชื่อเสียงที่อยากได้ก่อน');const s=matchSfx(t);if(!s){$('#fxNote').textContent='ยังไม่รู้จักเสียงนี้ ลองคำว่า '+SFX.slice(0,8).map(x=>x.name).join(' · ');return;}pickFx(s);};
+$('#fxPrompt').addEventListener('keydown',e=>{if(e.key==='Enter')$('#fxGo').click();});
+$('#fxAdd').onclick=()=>{if(fx.buf)addClip({track:3,name:fx.def.name,buffer:fx.buf});};
+renderFx();
+
+/* ---------- demo ---------- */
+$('#demoBtn').onclick=async()=>{stopTransport();toast('กำลังสร้างตัวอย่าง…');const keep=S.playhead;
+  const cfg=parseMusic('เพลงพื้นหลัง สดใส');const m=await renderMusic(cfg,16,hash('demo'));
+  const items=[[0,null,m,'เพลงพื้นหลัง',2,.6]];
+  for(const [t,n] of [[1,'วูบ'],[4,'คลิก'],[7,'ป๊อป'],[10,'ติ๊ง'],[13,'ปรบมือ']]){const d=SFX.find(s=>s.name===n);items.push([t,d,await renderSfx(d,hash(n)),n,3,1]);}
+  for(const [t,,buf,name,track,gain] of items){S.playhead=t;addClip({track,name,buffer:buf,gain});}
+  S.playhead=keep;S.sel=null;renderTimeline();scroller.scrollLeft=0;toast('โหลดตัวอย่างแล้ว กดเล่นด้านล่างได้เลย');};
+
+renderTimeline();drawMusicBars();
+</script>
+</body>
+</html>
