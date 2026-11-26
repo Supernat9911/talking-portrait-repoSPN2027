@@ -38,7 +38,7 @@ html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;padding-bottom:96px;
   background-image:radial-gradient(var(--line) 1px,transparent 1px);background-size:22px 22px}
 button,input,select,textarea{font:inherit;color:inherit}
-.page{max-width:960px;margin:0 auto;padding:20px 16px 24px}
+.page{max-width:960px;margin:0 auto;padding-block:20px 24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .pill{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--blue);background:var(--blue-soft);padding:4px 12px;border-radius:999px}
 h1{font-size:clamp(26px,6vw,36px);line-height:1.2;margin:10px 0 2px;font-weight:700;letter-spacing:-.01em}
 .sub{margin:0;color:var(--muted)}
@@ -152,7 +152,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .selbar .vol{display:flex;align-items:center;gap:6px;font-size:13px;flex:1;min-width:160px;white-space:nowrap}
 
 /* transport */
-.transport{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);width:min(940px,calc(100% - 24px));background:rgba(28,32,52,.92);color:#fff;border-radius:999px;padding:8px 10px 8px 8px;display:flex;align-items:center;gap:10px;z-index:20;box-shadow:0 10px 30px rgba(0,0,0,.25);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.transport{position:fixed;left:50%;bottom:calc(12px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(940px,calc(100% - 24px));background:rgba(28,32,52,.92);color:#fff;border-radius:999px;padding:8px 10px 8px 8px;display:flex;align-items:center;gap:10px;z-index:20;box-shadow:0 10px 30px rgba(0,0,0,.25);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .transport .pp{width:46px;height:46px;border-radius:50%;border:0;background:#fff;color:#1C2034;display:grid;place-items:center;cursor:pointer;flex:none}
 .transport .pp svg{width:22px;height:22px;fill:currentColor;stroke:none}
 .transport .times{display:flex;flex-direction:column;flex:1;min-width:0;gap:5px}
@@ -390,7 +390,7 @@ function makeCapture(host,color,onBuffer){
   async function start(){
     if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){toast('เบราว์เซอร์นี้อัดเสียงไม่ได้ ลองอัปโหลดไฟล์แทน');return;}
     stopPreview();
-    try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});}catch(e){toast('เปิดไมโครโฟนไม่ได้ กรุณาอนุญาตการใช้ไมค์');return;}
+    try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});}catch(e){st.textContent='เปิดไมค์ในหน้านี้ไม่ได้ ใช้ปุ่มอัปโหลดไฟล์เสียงแทน';toast('เปิดไมโครโฟนไม่ได้ ใช้ “อัปโหลดไฟล์เสียง” แทน');return;}
     const c=ac();const srcN=c.createMediaStreamSource(stream);an=c.createAnalyser();an.fftSize=1024;srcN.connect(an);
     chunks=[];hist=[];rec=new MediaRecorder(stream);rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
     rec.onstop=async()=>{cancelAnimationFrame(raf);stream.getTracks().forEach(t=>t.stop());btn.classList.remove('on');btn.innerHTML='<span class="dot"></span>';
@@ -607,7 +607,7 @@ $('#selDup').onclick=()=>{const c=selClip();if(!c)return;const keep=S.playhead;S
 $('#selPlay').onclick=()=>{const c=selClip();if(!c)return;if(c.buffer)previewBuffer(c.buffer);else{stopTransport();speak({...c.tts,gain:c.gain});}};
 $('#zoomIn').onclick=()=>{S.pps=Math.min(160,S.pps*1.5);renderTimeline();scrollToTime(S.playhead);};
 $('#zoomOut').onclick=()=>{S.pps=Math.max(8,S.pps/1.5);renderTimeline();scrollToTime(S.playhead);};
-$('#clearAll').onclick=()=>{if(!S.clips.length)return;if(!confirm('ลบคลิปทั้งหมดในไทม์ไลน์?'))return;stopTransport();S.clips=[];S.sel=null;S.playhead=0;renderTimeline();};
+let clearArm=0;$('#clearAll').onclick=()=>{if(!S.clips.length)return;const b=$('#clearAll');if(Date.now()-clearArm>3000){clearArm=Date.now();b.textContent='แตะอีกครั้งเพื่อลบ';setTimeout(()=>b.textContent='ล้างทั้งหมด',3000);return;}clearArm=0;b.textContent='ล้างทั้งหมด';stopTransport();S.clips=[];S.sel=null;S.playhead=0;renderTimeline();};
 function scrollToTime(t){const x=t*S.pps;if(x<scroller.scrollLeft+20||x>scroller.scrollLeft+scroller.clientWidth-40)scroller.scrollLeft=Math.max(0,x-scroller.clientWidth*.3);}
 function updateHead(){ph.style.left=(S.playhead*S.pps)+'px';$('#phLabel').textContent=fmtShort(S.playhead);const end=Math.max(projectEnd(),.001);$('#tNow').textContent=fmt(S.playhead);$('#tEnd').textContent=fmt(projectEnd(),false);$('#progFill').style.width=clamp(S.playhead/end*100,0,100)+'%';}
 $('#prog').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect();seek((e.clientX-r.left)/r.width*projectEnd());});
@@ -634,12 +634,21 @@ document.addEventListener('keydown',e=>{if(e.code==='Space'&&!/INPUT|TEXTAREA|SE
 function encodeWav(buf){const ch=buf.numberOfChannels,len=buf.length,sr=buf.sampleRate,ab=new ArrayBuffer(44+len*ch*2),v=new DataView(ab);const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));};
   ws(0,'RIFF');v.setUint32(4,36+len*ch*2,true);ws(8,'WAVE');ws(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,ch,true);v.setUint32(24,sr,true);v.setUint32(28,sr*ch*2,true);v.setUint16(32,ch*2,true);v.setUint16(34,16,true);ws(36,'data');v.setUint32(40,len*ch*2,true);
   const chans=[...Array(ch)].map((_,c)=>buf.getChannelData(c));let o=44;for(let i=0;i<len;i++)for(let c=0;c<ch;c++){const s=clamp(chans[c][i],-1,1);v.setInt16(o,s<0?s*0x8000:s*0x7FFF,true);o+=2;}return new Blob([ab],{type:'audio/wav'});}
+const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
+async function zipStore(name,blob){const data=new Uint8Array(await blob.arrayBuffer());let crc=0xFFFFFFFF;for(let i=0;i<data.length;i++)crc=CRC[(crc^data[i])&255]^(crc>>>8);crc=(crc^0xFFFFFFFF)>>>0;
+  const nm=new TextEncoder().encode(name),L=new DataView(new ArrayBuffer(30)),C=new DataView(new ArrayBuffer(46)),E=new DataView(new ArrayBuffer(22));
+  L.setUint32(0,0x04034b50,true);L.setUint16(4,20,true);L.setUint32(14,crc,true);L.setUint32(18,data.length,true);L.setUint32(22,data.length,true);L.setUint16(26,nm.length,true);
+  C.setUint32(0,0x02014b50,true);C.setUint16(4,20,true);C.setUint16(6,20,true);C.setUint32(16,crc,true);C.setUint32(20,data.length,true);C.setUint32(24,data.length,true);C.setUint16(28,nm.length,true);
+  const cdOff=30+nm.length+data.length;E.setUint32(0,0x06054b50,true);E.setUint16(8,1,true);E.setUint16(10,1,true);E.setUint32(12,46+nm.length,true);E.setUint32(16,cdOff,true);
+  return new Blob([L.buffer,nm,data,C.buffer,nm,E.buffer],{type:'application/zip'});}
 $('#exportBtn').onclick=async()=>{
   const bufClips=S.clips.filter(c=>c.buffer&&!S.muted[c.track]);if(!bufClips.length){toast(S.clips.length?'คลิปเสียงเครื่องอ่านบันทึกเป็นไฟล์ไม่ได้ ใช้การอัดเสียงแทน':'ยังไม่มีคลิปให้บันทึก');return;}
   const end=bufClips.reduce((m,c)=>Math.max(m,c.start+clipDur(c)),0)+.2;const oc=new OAC(2,Math.ceil(end*SR),SR);
   const comp=oc.createDynamicsCompressor();comp.threshold.value=-8;comp.connect(oc.destination);
   for(const c of bufClips){const s=oc.createBufferSource();s.buffer=c.buffer;const g=oc.createGain();g.gain.value=c.gain;s.connect(g);g.connect(comp);s.start(c.start);}
-  toast('กำลังรวมเสียง…');const out=await oc.startRendering();const url=URL.createObjectURL(encodeWav(out));const a=document.createElement('a');a.href=url;a.download='voice-studio.wav';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);
+  toast('กำลังรวมเสียง…');const out=await oc.startRendering();const wav=encodeWav(out);
+  if(window.claude&&window.claude.use){const dl=await window.claude.use('downloads').catch(()=>null);if(!dl){toast('หน้านี้บันทึกไฟล์ไม่ได้');return;}try{await dl.save({filename:'voice-studio.zip',data:await zipStore('voice-studio.wav',wav)});}catch(e){toast(e&&e.code==='declined'?'ยกเลิกการบันทึก':'บันทึกไฟล์ไม่สำเร็จ');return;}}
+  else{const url=URL.createObjectURL(wav);const a=document.createElement('a');a.href=url;a.download='voice-studio.wav';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);}
   toast(S.clips.some(c=>c.tts)?'บันทึกแล้ว (ไม่รวมคลิปเสียงเครื่องอ่าน)':'บันทึกไฟล์ WAV แล้ว');
 };
 
