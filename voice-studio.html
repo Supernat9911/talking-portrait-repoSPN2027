@@ -382,23 +382,28 @@ function makeCapture(host,color,onBuffer){
       <button class="recbtn" aria-label="อัดเสียง"><span class="dot"></span></button>
       <div style="flex:1;min-width:0"><div class="wavebox"><canvas style="height:84px"></canvas><div class="meta"><span class="st">แตะปุ่มแดงเพื่ออัดเสียง</span><span class="tm">00:00</span></div></div></div>
     </div>
-    <div class="row"><label class="btn small" style="cursor:pointer">อัปโหลดไฟล์เสียง<input type="file" accept="audio/*" hidden></label><span class="note fname"></span></div>`;
-  const btn=host.querySelector('.recbtn'),cv=host.querySelector('canvas'),st=host.querySelector('.st'),tm=host.querySelector('.tm'),file=host.querySelector('input[type=file]'),fname=host.querySelector('.fname');
+    <div class="row"><label class="btn small cap hide" style="cursor:pointer">🎙 อัดด้วยแอพอัดเสียง<input type="file" class="fa" accept="audio/*" capture hidden></label><label class="btn small cap hide" style="cursor:pointer">🎥 อัดวิดีโอแล้วใช้เสียง<input type="file" class="fv" accept="video/*" capture="user" hidden></label><label class="btn small" style="cursor:pointer">อัปโหลดไฟล์เสียง<input type="file" class="fu" accept="audio/*,video/*" hidden></label><span class="note fname"></span></div>`;
+  const btn=host.querySelector('.recbtn'),cv=host.querySelector('canvas'),st=host.querySelector('.st'),tm=host.querySelector('.tm'),fileA=host.querySelector('.fa'),fileV=host.querySelector('.fv'),fileU=host.querySelector('.fu'),fname=host.querySelector('.fname');
   let rec=null,stream=null,chunks=[],hist=[],raf=0,t0=0,an=null;const api={buffer:null,set(buf,label){api.buffer=buf;drawBarsWave(cv,peaks(buf,160),cssVar(host,'--accent'));tm.textContent=fmt(buf.duration);st.textContent=label||'พร้อมใช้งาน';onBuffer&&onBuffer(buf);}};
   drawBarsWave(cv,null,cssVar(host,'--accent-mid'));
   function liveDraw(){const d=new Uint8Array(an.fftSize);an.getByteTimeDomainData(d);let s=0;for(const x of d){const v=(x-128)/128;s+=v*v;}hist.push(Math.min(1,Math.sqrt(s/d.length)*4));const [g,w,h]=fitCanvas(cv);g.clearRect(0,0,w,h);g.fillStyle=cssVar(host,'--accent');const n=Math.floor(w/4),start=Math.max(0,hist.length-n);for(let i=start;i<hist.length;i++){const bh=Math.max(2,hist[i]*h*.9);g.fillRect((i-start)*4,(h-bh)/2,2.5,bh);}tm.textContent=fmt(ac().currentTime-t0);raf=requestAnimationFrame(liveDraw);}
   async function start(){
-    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){toast('เบราว์เซอร์นี้อัดเสียงไม่ได้ ลองอัปโหลดไฟล์แทน');return;}
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.MediaRecorder){blockMic();return;}
     stopPreview();
-    try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});}catch(e){st.textContent='เปิดไมค์ในหน้านี้ไม่ได้ ใช้ปุ่มอัปโหลดไฟล์เสียงแทน';toast('เปิดไมโครโฟนไม่ได้ ใช้ “อัปโหลดไฟล์เสียง” แทน');return;}
+    try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});}catch(e){blockMic();toast('หน้านี้เปิดไมค์ไม่ได้ แตะปุ่มแดงอีกครั้งเพื่ออัดด้วยแอพอัดเสียงของเครื่อง');return;}
     const c=ac();const srcN=c.createMediaStreamSource(stream);an=c.createAnalyser();an.fftSize=1024;srcN.connect(an);
     chunks=[];hist=[];rec=new MediaRecorder(stream);rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
     rec.onstop=async()=>{cancelAnimationFrame(raf);stream.getTracks().forEach(t=>t.stop());btn.classList.remove('on');btn.innerHTML='<span class="dot"></span>';
       try{const ab=await new Blob(chunks,{type:rec.mimeType}).arrayBuffer();const buf=await ac().decodeAudioData(ab);api.set(buf,'อัดเสร็จแล้ว');fname.textContent='';}catch(e){st.textContent='อ่านเสียงที่อัดไม่ได้';}};
     rec.start();t0=c.currentTime;btn.classList.add('on');btn.innerHTML='<span class="sq"></span>';st.textContent='กำลังอัด… แตะอีกครั้งเพื่อหยุด';liveDraw();
   }
-  btn.onclick=()=>{if(rec&&rec.state==='recording')rec.stop();else start();};
-  file.onchange=async()=>{const f=file.files[0];if(!f)return;try{const buf=await ac().decodeAudioData(await f.arrayBuffer());fname.textContent=f.name;api.set(buf,'โหลดไฟล์แล้ว');}catch(e){toast('เปิดไฟล์เสียงนี้ไม่ได้');}file.value='';};
+  let micBlocked=false;
+  function blockMic(){micBlocked=true;host.querySelectorAll('.cap').forEach(x=>x.classList.remove('hide'));st.textContent='แตะปุ่มแดงเพื่ออัดด้วยแอพอัดเสียงของเครื่อง';}
+  try{const pp=document.permissionsPolicy||document.featurePolicy;if(pp&&pp.allowsFeature&&!pp.allowsFeature('microphone'))blockMic();}catch(e){}
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.MediaRecorder)blockMic();
+  btn.onclick=()=>{if(rec&&rec.state==='recording')rec.stop();else if(micBlocked)fileA.click();else start();};
+  async function onFile(inp,label){const f=inp.files[0];if(!f)return;st.textContent='กำลังอ่านเสียง…';try{const buf=await ac().decodeAudioData(await f.arrayBuffer());fname.textContent=f.name;api.set(buf,label);}catch(e){st.textContent='อ่านเสียงจากไฟล์นี้ไม่ได้';toast('อ่านเสียงจากไฟล์นี้ไม่ได้ ลองไฟล์ .m4a .mp3 .wav หรือวิดีโอ .mp4');}inp.value='';}
+  fileA.onchange=()=>onFile(fileA,'อัดเสร็จแล้ว');fileV.onchange=()=>onFile(fileV,'ได้เสียงจากวิดีโอแล้ว');fileU.onchange=()=>onFile(fileU,'โหลดไฟล์แล้ว');
   return api;
 }
 
@@ -647,7 +652,7 @@ $('#exportBtn').onclick=async()=>{
   const comp=oc.createDynamicsCompressor();comp.threshold.value=-8;comp.connect(oc.destination);
   for(const c of bufClips){const s=oc.createBufferSource();s.buffer=c.buffer;const g=oc.createGain();g.gain.value=c.gain;s.connect(g);g.connect(comp);s.start(c.start);}
   toast('กำลังรวมเสียง…');const out=await oc.startRendering();const wav=encodeWav(out);
-  if(window.claude&&window.claude.use){const dl=await window.claude.use('downloads').catch(()=>null);if(!dl){toast('หน้านี้บันทึกไฟล์ไม่ได้');return;}try{await dl.save({filename:'voice-studio.zip',data:await zipStore('voice-studio.wav',wav)});}catch(e){toast(e&&e.code==='declined'?'ยกเลิกการบันทึก':'บันทึกไฟล์ไม่สำเร็จ');return;}}
+  if(window.claude&&window.claude.use){const dl=await window.claude.use('downloads').catch(()=>null);if(!dl){toast('แอพนี้บันทึกไฟล์ไม่ได้ เปิดลิงก์ในเบราว์เซอร์ Chrome หรือ Safari แล้วลองอีกครั้ง');return;}try{await dl.save({filename:'voice-studio.zip',data:await zipStore('voice-studio.wav',wav)});}catch(e){const c=e&&e.code;toast(c==='declined'?'ยกเลิกการบันทึกแล้ว':c==='rate_limited'?'มีหน้าต่างบันทึกเปิดอยู่ รอสักครู่แล้วลองใหม่':c==='host_unavailable'?'แอพนี้บันทึกไฟล์ไม่ได้ เปิดลิงก์ในเบราว์เซอร์แล้วลองอีกครั้ง':'บันทึกไฟล์ไม่สำเร็จ ('+(c||'ไม่ทราบสาเหตุ')+')');return;}}
   else{const url=URL.createObjectURL(wav);const a=document.createElement('a');a.href=url;a.download='voice-studio.wav';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);}
   toast(S.clips.some(c=>c.tts)?'บันทึกแล้ว (ไม่รวมคลิปเสียงเครื่องอ่าน)':'บันทึกไฟล์ WAV แล้ว');
 };
