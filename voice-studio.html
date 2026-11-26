@@ -362,7 +362,7 @@ function normalize(buf,peak=.9){let m=0;for(let c=0;c<buf.numberOfChannels;c++){
 function toMono(buf){const n=buf.length,out=new Float32Array(n);for(let c=0;c<buf.numberOfChannels;c++){const d=buf.getChannelData(c);for(let i=0;i<n;i++)out[i]+=d[i]/buf.numberOfChannels;}return out;}
 function peaks(buf,n){const d=toMono(buf),out=new Float32Array(n),step=d.length/n;let m=0;for(let i=0;i<n;i++){let p=0;const a=Math.floor(i*step),b=Math.min(d.length,Math.floor((i+1)*step));for(let j=a;j<b;j+=2){const v=Math.abs(d[j]);if(v>p)p=v;}out[i]=p;if(p>m)m=p;}if(m>0)for(let i=0;i<n;i++)out[i]/=m;return out;}
 function fitCanvas(cv){const r=cv.getBoundingClientRect(),dpr=window.devicePixelRatio||1;cv.width=Math.max(1,Math.round(r.width*dpr));cv.height=Math.max(1,Math.round(r.height*dpr));const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);return [g,r.width,r.height];}
-function drawBarsWave(cv,pk,color,gap=4,bw=2.5){const [g,w,h]=fitCanvas(cv);g.clearRect(0,0,w,h);g.fillStyle=color;const n=Math.max(1,Math.floor(w/gap));for(let i=0;i<n;i++){const v=pk?pk[Math.floor(i/n*pk.length)]:0;const bh=Math.max(2,v*h*.9);g.globalAlpha=v>.05?1:.45;g.fillRect(i*gap,(h-bh)/2,bw,bh);}g.globalAlpha=1;}
+function drawBarsWave(cv,pk,color,gap=4,bw=2.5){if(!cv.getBoundingClientRect().width)return;const [g,w,h]=fitCanvas(cv);g.clearRect(0,0,w,h);g.fillStyle=color;const n=Math.max(1,Math.floor(w/gap));for(let i=0;i<n;i++){const v=pk?pk[Math.floor(i/n*pk.length)]:0;const bh=Math.max(2,v*h*.9);g.globalAlpha=v>.05?1:.45;g.fillRect(i*gap,(h-bh)/2,bw,bh);}g.globalAlpha=1;}
 
 /* ---------- preview player ---------- */
 let pv=null;
@@ -377,20 +377,22 @@ function checkThaiVoice(){if(!('speechSynthesis' in window)){$('#ttsNote').textC
 if('speechSynthesis' in window){speechSynthesis.onvoiceschanged=checkThaiVoice;setTimeout(checkThaiVoice,600);}
 
 /* ---------- recorder widget ---------- */
+const CAPS=[];
 function makeCapture(host,color,onBuffer){
   host.innerHTML=`<div class="row" style="gap:14px;flex-wrap:nowrap">
       <button class="recbtn" aria-label="อัดเสียง"><span class="dot"></span></button>
       <div style="flex:1;min-width:0"><div class="wavebox"><canvas style="height:84px"></canvas><div class="meta"><span class="st">แตะปุ่มแดงเพื่ออัดเสียง</span><span class="tm">00:00</span></div></div></div>
     </div>
-    <div class="row"><label class="btn small cap hide" style="cursor:pointer">🎙 อัดด้วยแอพอัดเสียง<input type="file" class="fa" accept="audio/*" capture hidden></label><label class="btn small cap hide" style="cursor:pointer">🎥 อัดวิดีโอแล้วใช้เสียง<input type="file" class="fv" accept="video/*" capture="user" hidden></label><label class="btn small" style="cursor:pointer">อัปโหลดไฟล์เสียง<input type="file" class="fu" accept="audio/*,video/*" hidden></label><span class="note fname"></span></div>`;
-  const btn=host.querySelector('.recbtn'),cv=host.querySelector('canvas'),st=host.querySelector('.st'),tm=host.querySelector('.tm'),fileA=host.querySelector('.fa'),fileV=host.querySelector('.fv'),fileU=host.querySelector('.fu'),fname=host.querySelector('.fname');
+    <div class="row"><label class="btn small cap hide" style="cursor:pointer">🎙 อัดด้วยแอพอัดเสียง<input type="file" class="fa" accept="audio/*" capture hidden></label><label class="btn small cap hide" style="cursor:pointer">🎥 อัดวิดีโอแล้วใช้เสียง<input type="file" class="fv" accept="video/*" capture="user" hidden></label><label class="btn small" style="cursor:pointer">อัปโหลดไฟล์เสียง<input type="file" class="fu" accept="audio/*,video/*" hidden></label><input type="file" class="fany" accept="audio/*,video/*" hidden><span class="note fname"></span></div>`;
+  const btn=host.querySelector('.recbtn'),cv=host.querySelector('canvas'),st=host.querySelector('.st'),tm=host.querySelector('.tm'),fileA=host.querySelector('.fa'),fileV=host.querySelector('.fv'),fileU=host.querySelector('.fu'),fileAny=host.querySelector('.fany'),fname=host.querySelector('.fname');
   let rec=null,stream=null,chunks=[],hist=[],raf=0,t0=0,an=null;const api={buffer:null,set(buf,label){api.buffer=buf;drawBarsWave(cv,peaks(buf,160),cssVar(host,'--accent'));tm.textContent=fmt(buf.duration);st.textContent=label||'พร้อมใช้งาน';onBuffer&&onBuffer(buf);}};
-  drawBarsWave(cv,null,cssVar(host,'--accent-mid'));
+  api.redraw=()=>{if(rec&&rec.state==='recording')return;if(api.buffer)drawBarsWave(cv,peaks(api.buffer,160),cssVar(host,'--accent'));else drawBarsWave(cv,null,cssVar(host,'--accent-mid'));};
+  CAPS.push(api);requestAnimationFrame(api.redraw);
   function liveDraw(){const d=new Uint8Array(an.fftSize);an.getByteTimeDomainData(d);let s=0;for(const x of d){const v=(x-128)/128;s+=v*v;}hist.push(Math.min(1,Math.sqrt(s/d.length)*4));const [g,w,h]=fitCanvas(cv);g.clearRect(0,0,w,h);g.fillStyle=cssVar(host,'--accent');const n=Math.floor(w/4),start=Math.max(0,hist.length-n);for(let i=start;i<hist.length;i++){const bh=Math.max(2,hist[i]*h*.9);g.fillRect((i-start)*4,(h-bh)/2,2.5,bh);}tm.textContent=fmt(ac().currentTime-t0);raf=requestAnimationFrame(liveDraw);}
   async function start(){
     if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.MediaRecorder){blockMic();return;}
     stopPreview();
-    try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});}catch(e){blockMic();toast('หน้านี้เปิดไมค์ไม่ได้ แตะปุ่มแดงอีกครั้งเพื่ออัดด้วยแอพอัดเสียงของเครื่อง');return;}
+    try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});}catch(e){blockMic();toast('หน้านี้เปิดไมค์ไม่ได้ แตะปุ่มแดงอีกครั้งเพื่ออัดผ่านเมนูของมือถือ');return;}
     const c=ac();const srcN=c.createMediaStreamSource(stream);an=c.createAnalyser();an.fftSize=1024;srcN.connect(an);
     chunks=[];hist=[];rec=new MediaRecorder(stream);rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
     rec.onstop=async()=>{cancelAnimationFrame(raf);stream.getTracks().forEach(t=>t.stop());btn.classList.remove('on');btn.innerHTML='<span class="dot"></span>';
@@ -398,12 +400,12 @@ function makeCapture(host,color,onBuffer){
     rec.start();t0=c.currentTime;btn.classList.add('on');btn.innerHTML='<span class="sq"></span>';st.textContent='กำลังอัด… แตะอีกครั้งเพื่อหยุด';liveDraw();
   }
   let micBlocked=false;
-  function blockMic(){micBlocked=true;host.querySelectorAll('.cap').forEach(x=>x.classList.remove('hide'));st.textContent='แตะปุ่มแดงเพื่ออัดด้วยแอพอัดเสียงของเครื่อง';}
+  function blockMic(){micBlocked=true;host.querySelectorAll('.cap').forEach(x=>x.classList.remove('hide'));st.textContent='แตะปุ่มแดง แล้วเลือกอัดวิดีโอหรืออัดเสียงจากเมนูของมือถือ';}
   try{const pp=document.permissionsPolicy||document.featurePolicy;if(pp&&pp.allowsFeature&&!pp.allowsFeature('microphone'))blockMic();}catch(e){}
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.MediaRecorder)blockMic();
-  btn.onclick=()=>{if(rec&&rec.state==='recording')rec.stop();else if(micBlocked)fileA.click();else start();};
-  async function onFile(inp,label){const f=inp.files[0];if(!f)return;st.textContent='กำลังอ่านเสียง…';try{const buf=await ac().decodeAudioData(await f.arrayBuffer());fname.textContent=f.name;api.set(buf,label);}catch(e){st.textContent='อ่านเสียงจากไฟล์นี้ไม่ได้';toast('อ่านเสียงจากไฟล์นี้ไม่ได้ ลองไฟล์ .m4a .mp3 .wav หรือวิดีโอ .mp4');}inp.value='';}
-  fileA.onchange=()=>onFile(fileA,'อัดเสร็จแล้ว');fileV.onchange=()=>onFile(fileV,'ได้เสียงจากวิดีโอแล้ว');fileU.onchange=()=>onFile(fileU,'โหลดไฟล์แล้ว');
+  btn.onclick=()=>{if(rec&&rec.state==='recording')rec.stop();else if(micBlocked)fileAny.click();else start();};
+  async function onFile(inp,label){const f=inp.files[0];if(!f)return;st.textContent='กำลังอ่านเสียง…';try{const buf=await ac().decodeAudioData(await f.arrayBuffer());fname.textContent=f.name;api.set(buf,label);}catch(e){st.textContent='อ่านเสียงจากไฟล์นี้ไม่ได้';toast('อ่านเสียงจากไฟล์นี้ไม่ได้ ใช้ไฟล์ .m4a .mp3 .wav .ogg หรือวิดีโอ .mp4 .mov (ไฟล์ .amr/.3gp ใช้ไม่ได้)');}inp.value='';}
+  fileA.onchange=()=>onFile(fileA,'อัดเสร็จแล้ว');fileV.onchange=()=>onFile(fileV,'ได้เสียงจากวิดีโอแล้ว');fileU.onchange=()=>onFile(fileU,'โหลดไฟล์แล้ว');fileAny.onchange=()=>onFile(fileAny,'อัดเสร็จแล้ว');
   return api;
 }
 
@@ -658,7 +660,7 @@ $('#exportBtn').onclick=async()=>{
 };
 
 /* ---------- tabs & segmented ---------- */
-document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-selected',x===t));document.querySelectorAll('.panel').forEach((p,i)=>p.classList.toggle('on',i==t.dataset.p));if(t.dataset.p==='2')drawMusicBars();});
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-selected',x===t));document.querySelectorAll('.panel').forEach((p,i)=>p.classList.toggle('on',i==t.dataset.p));if(t.dataset.p==='2')drawMusicBars();CAPS.forEach(c=>c.redraw());});
 function seg(id,onChange){const el=$(id);el.querySelectorAll('button').forEach(b=>b.onclick=()=>{el.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));onChange(b.dataset.m);});}
 
 /* ---------- panel 0: narration ---------- */
